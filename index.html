@@ -34,7 +34,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             max-width: 90vw;
             max-height: 90vw;
-            outline: none; /* 去掉聚焦时的外边框 */
+            outline: none;
         }
 
         /* 手机端虚拟摇杆样式 */
@@ -112,9 +112,8 @@
         let dy = 0;
         let score = 0;
         let gameInterval;
-        let gameSpeed = 300; // 【修改1】速度减慢一半（从150ms调到300ms）
+        let gameSpeed = 600; // 【再次修改】速度再减慢一半（从300ms调到600ms）
 
-        // 监听整个窗口的键盘事件
         window.addEventListener("keydown", changeDirection);
 
         function startGame() {
@@ -157,22 +156,19 @@
             ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
         }
 
-        // 电脑键盘控制逻辑（阻止了方向键滚屏默认行为）
         function changeDirection(event) {
             const keyPressed = event.keyCode;
             
-            // 阻止方向键让网页上下滚动的默认行为
             if([37, 38, 39, 40].includes(keyPressed)) {
                 event.preventDefault();
             }
 
-            if (keyPressed === 37 && dx === 0) { dx = -1; dy = 0; } // 左
-            if (keyPressed === 38 && dy === 0) { dx = 0; dy = -1; } // 上
-            if (keyPressed === 39 && dx === 0) { dx = 1; dy = 0; }  // 右
-            if (keyPressed === 40 && dy === 0) { dx = 0; dy = 1; }  // 下
+            if (keyPressed === 37 && dx === 0) { dx = -1; dy = 0; }
+            if (keyPressed === 38 && dy === 0) { dx = 0; dy = -1; }
+            if (keyPressed === 39 && dx === 0) { dx = 1; dy = 0; }
+            if (keyPressed === 40 && dy === 0) { dx = 0; dy = 1; }
         }
 
-        // 手机点击控制逻辑
         function handleControl(dir) {
             if (dir === 'LEFT' && dx === 0) { dx = -1; dy = 0; }
             if (dir === 'UP' && dy === 0) { dx = 0; dy = -1; }
@@ -201,11 +197,9 @@
             scoreElement.innerText = score;
             generateFood();
             startGame();
-            // 重新开始时也自动聚焦
             canvas.focus();
         }
 
-        // 【修改2】初始化时让窗口和画布自动获取焦点，无需手动点击网页
         window.onload = function() {
             window.focus();
             canvas.focus();
