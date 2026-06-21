@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>疯狂赛车-极速冲卡</title>
+    <title>极限拉力赛：弯道狂飙</title>
     <style>
         body {
-            background-color: #1a1a2e;
+            background-color: #111424;
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -17,39 +17,39 @@
             margin: 0;
             overflow: hidden;
         }
-        h1 { margin: 5px 0; font-size: 26px; color: #e17055; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        h1 { margin: 5px 0; font-size: 26px; color: #f39c12; text-shadow: 0 2px 5px rgba(0,0,0,0.7); }
         
         .game-layout {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
         }
 
         /* 进度条样式 */
         .progress-container {
-            width: 30px;
-            height: 450px;
-            background: #2d3436;
-            border: 3px solid #dfe6e9;
-            border-radius: 10px;
+            width: 32px;
+            height: 460px;
+            background: #1e272e;
+            border: 3px solid #7f8c8d;
+            border-radius: 12px;
             position: relative;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         .progress-finish {
             position: absolute;
-            top: 0; width: 100%; height: 15px;
+            top: 0; width: 100%; height: 16px;
             background-image: linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), 
                               linear-gradient(45deg, #000 25%, #fff 25%, #fff 75%, #000 75%, #000);
-            background-size: 10px 10px;
-            background-position: 0 0, 5px 5px;
-            border-radius: 5px 5px 0 0;
+            background-size: 8px 8px;
+            background-position: 0 0, 4px 4px;
+            border-radius: 8px 8px 0 0;
         }
         .player-indicator {
             position: absolute;
             left: 5px; width: 14px; height: 14px;
             background: #3498db; border: 2px solid #fff; border-radius: 50%;
             transition: bottom 0.1s linear;
-            z-index: 2;
+            z-index: 3;
         }
         .ai-indicator {
             position: absolute;
@@ -60,8 +60,8 @@
 
         canvas {
             background-color: #2c3e50;
-            border: 4px solid #dfe6e9;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border: 4px solid #7f8c8d;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
             outline: none;
         }
         .tip-text {
@@ -72,23 +72,23 @@
             animation: blink 1s infinite;
         }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .back-btn { margin-top: 10px; color: #b2bec3; text-decoration: none; font-size: 14px; }
+        .back-btn { margin-top: 12px; color: #7f8c8d; text-decoration: none; font-size: 14px; }
         .back-btn:hover { color: #fff; }
     </style>
 </head>
 <body>
 
-    <h1>🏎️ 极速狂飙：冲向终点</h1>
+    <h1>🏎️ 极限拉力赛：30000米大弯道</h1>
     
     <div class="game-layout">
         <div class="progress-container" id="progressBar">
             <div class="progress-finish"></div>
-            </div>
+        </div>
 
-        <canvas id="roadCanvas" width="360" height="450" tabindex="1"></canvas>
+        <canvas id="roadCanvas" width="400" height="480" tabindex="1"></canvas>
     </div>
     
-    <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 弹射起步！</div>
+    <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 开启3万米跨年狂飙！</div>
     <a href="../" class="back-btn">← 返回游戏大厅</a>
 
     <script>
@@ -97,37 +97,54 @@
         const tipElement = document.getElementById("gameTip");
         const progressBar = document.getElementById("progressBar");
 
-        // 赛道总长度 
-        const TRACK_LENGTH = 3000; 
+        // 【修改2】总距离增加10倍（30000米）
+        const TRACK_LENGTH = 30000; 
 
-        // 车辆基础尺寸
-        const carW = 45;
-        const carH = 75;
+        const carW = 46;
+        const carH = 76;
 
-        // 玩家赛车状态
+        // 玩家赛车
         let player = {
-            x: 157, // 居中
-            y: 350, // 固定在下方
-            distance: 0, // 跑了多少米
+            x: 177,
+            y: 370,
+            distance: 0,
             speed: 0,
-            maxSpeed: 15,
-            acc: 0.2, // 加速度
-            dec: 0.1, // 自然减速
+            maxSpeed: 18,
+            acc: 0.25,
+            dec: 0.12,
             color: "#3498db"
         };
 
-        // 3辆AI对手车
+        // 【修改3】宿敌赛车精简为2辆
         let aiCars = [
-            { id: 1, name: "红魔号", x: 45, y: 350, distance: 0, speed: 0, maxSpeed: 12.5, color: "#e74c3c" },
-            { id: 2, name: "闪电绿", x: 157, y: 200, distance: 0, speed: 0, maxSpeed: 12.8, color: "#2ecc71" },
-            { id: 3, name: "大黄蜂", x: 270, y: 350, distance: 0, speed: 0, maxSpeed: 13.2, color: "#f1c40f" }
+            { id: 1, name: "烈焰红魔", x: 70, distance: 0, speed: 0, maxSpeed: 15.5, color: "#e74c3c" },
+            { id: 2, name: "剧毒黄蜂", x: 280, distance: 0, speed: 0, maxSpeed: 16.0, color: "#f1c40f" }
         ];
 
-        // 按键状态监听
+        // 障碍物数组（路中央的故障三角牌）
+        let obstacles = [];
+
+        // 【修改1】弯道控制变量
+        let trackCurve = 0;       // 当前赛道的弯曲弯度
+        let currentCurveIdx = 0;  // 弯道事件索引
+        let bgOffset = 0;
+
+        // 预设弯道剧本 [距离, 弯度(正数右弯，负数左弯)]
+        const curveScenarios = [
+            {dist: 1500, target: 3},    // 缓右弯
+            {dist: 4500, target: -4},   // 急左弯
+            {dist: 8000, target: 0},    // 直线
+            {dist: 11000, target: 5},   // 大右弯
+            {dist: 15000, target: -5},  // 大左弯
+            {dist: 19000, target: 2},   // 连续弯
+            {dist: 22000, target: -3},
+            {dist: 26000, target: 6},   // 魔鬼魔掌弯
+            {dist: 29000, target: 0}    // 冲刺直道
+        ];
+
         let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
         let gameInterval;
         let gameRunning = false;
-        let bgOffset = 0; // 模拟赛道滚动的偏移量
 
         window.addEventListener("keydown", e => {
             if(["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
@@ -141,14 +158,14 @@
 
         function startGame() {
             gameRunning = true;
-            tipElement.innerText = "🏁 冲刺！[↑加速] [↓减速] [← →变道]";
-            // 初始化创建进度条的指示器
+            tipElement.innerText = "🏁 [↑键加速] [← →变道] 顺着弯道方向微调方向，小心路中路障！";
             setupProgressIndicators();
             gameInterval = setInterval(gameLoop, 20);
         }
 
         function gameLoop() {
             handleInput();
+            updateTrackAndCurve();
             moveEntities();
             checkCollisions();
             checkRaceStatus();
@@ -156,255 +173,30 @@
             updateProgress();
         }
 
-        // 1. 控制玩家赛车（前后左右）
         function handleInput() {
             if (keys.ArrowUp) {
                 if (player.speed < player.maxSpeed) player.speed += player.acc;
             } else if (keys.ArrowDown) {
                 if (player.speed > 0) player.speed -= player.acc * 2;
             } else {
-                // 没按油门，慢慢减速
                 if (player.speed > 0) player.speed -= player.dec;
             }
             if (player.speed < 0) player.speed = 0;
 
-            // 左右移动（只有在车子动起来后才能转向）
-            if (player.speed > 1) {
-                if (keys.ArrowLeft && player.x > 25) player.x -= 4;
-                if (keys.ArrowRight && player.x < canvas.width - carW - 25) player.x += 4;
+            if (player.speed > 0.5) {
+                if (keys.ArrowLeft) player.x -= 4.5;
+                if (keys.ArrowRight) player.x += 4.5;
             }
         }
 
-        // 2. 移动玩家、对手和赛道
-        function moveEntities() {
-            // 玩家前进距离累计
-            player.distance += player.speed;
-
-            // 模拟赛道背景向下滚动
-            bgOffset += player.speed;
-
-            // AI对手车的逻辑
-            aiCars.forEach(ai => {
-                // 没到终点前，AI会随机在自己的最高速度附近加速
-                if (ai.distance < TRACK_LENGTH) {
-                    let targetSpeed = ai.maxSpeed + (Math.random() * 2 - 1);
-                    ai.speed += (targetSpeed > ai.speed) ? 0.15 : -0.1;
-                    ai.distance += ai.speed;
-                } else {
-                    ai.speed = 0;
-                }
-
-                // 左右稍微晃动，模仿真人在调整方向
-                ai.x += Math.sin(player.distance / 100 + ai.id) * 0.5;
-                // 限制在路边内
-                if(ai.x < 25) ai.x = 25;
-                if(ai.x > canvas.width - carW - 25) ai.x = canvas.width - carW - 25;
-            });
-        }
-
-        // 3. 碰撞检测（撞到别的车会剧烈减速）
-        function checkCollisions() {
-            aiCars.forEach(ai => {
-                // 计算AI车相对于玩家的可视Y坐标
-                let relativeY = player.y - (ai.distance - player.distance);
-                
-                // 只有当AI车在屏幕内时才做碰撞判断
-                if (relativeY > -carH && relativeY < canvas.height) {
-                    if (player.x < ai.x + carW && player.x + carW > ai.x &&
-                        player.y < relativeY + carH && player.y + carH > relativeY) {
-                        
-                        // 发生追尾/擦碰
-                        player.speed = 2; // 速度骤降
-                        tipElement.innerText = "💥 发生擦碰！赛车减速！";
-                        setTimeout(() => { if(gameRunning) tipElement.innerText = "🏁 赶紧追上去！"; }, 1000);
-                    }
-                }
-            });
-        }
-
-        // 4. 检查是否有人到达终点
-        function checkRaceStatus() {
-            if (player.distance >= TRACK_LENGTH) {
-                endRace("🎉 恭喜你！夺得冠军！");
-            } else {
-                // 检查是否有AI超过了终点
-                let winner = aiCars.find(ai => ai.distance >= TRACK_LENGTH);
-                if (winner) {
-                    endRace(`😭 被 ${winner.name} 捷足先登了！`);
-                }
-            }
-        }
-
-        function endRace(msg) {
-            clearInterval(gameInterval);
-            gameRunning = false;
-            tipElement.innerText = msg + " 按回车(Enter)重新挑战";
-            alert(msg);
-        }
-
-        // 5. 渲染画面（高级精细画法：带尾翼和拉花）
-        function drawScene() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 绘制公路背景
-            ctx.fillStyle = "#555";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 绘制路肩（红白相间隔离带）
-            let stripeH = 30;
-            let stripeStart = (bgOffset % (stripeH * 2));
-            for (let y = -stripeH * 2; y < canvas.height + stripeH; y += stripeH) {
-                ctx.fillStyle = ((Math.floor((y - bgOffset) / stripeH)) % 2 === 0) ? "#e74c3c" : "#fff";
-                ctx.fillRect(0, y + stripeStart, 20, stripeH);
-                ctx.fillRect(canvas.width - 20, y + stripeStart, 20, stripeH);
-            }
-
-            // 绘制车道虚线
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -bgOffset;
-            ctx.beginPath();
-            ctx.moveTo(113, 0); ctx.lineTo(113, canvas.height);
-            ctx.moveTo(246, 0); ctx.lineTo(246, canvas.height);
-            ctx.stroke();
-
-            // 绘制终点线（如果接近3000米的话）
-            let finishLineY = player.y - (TRACK_LENGTH - player.distance);
-            if (finishLineY > -100 && finishLineY < canvas.height) {
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(20, finishLineY, canvas.width - 40, 30);
-                ctx.fillStyle = "#000";
-                ctx.setLineDash([10, 10]);
-                ctx.lineWidth = 15;
-                ctx.beginPath();
-                ctx.moveTo(20, finishLineY + 7); ctx.lineTo(canvas.width - 20, finishLineY + 7);
-                ctx.moveTo(30, finishLineY + 22); ctx.lineTo(canvas.width - 20, finishLineY + 22);
-                ctx.stroke();
-            }
-
-            // 绘制所有对手车
-            aiCars.forEach(ai => {
-                let relativeY = player.y - (ai.distance - player.distance);
-                if (relativeY > -100 && relativeY < canvas.height + 100) {
-                    drawFancyCar(ai.x, relativeY, ai.color, false);
-                }
-            });
-
-            // 绘制玩家自己（如果按住上，排气管会喷火特效）
-            drawFancyCar(player.x, player.y, player.color, keys.ArrowUp && player.speed > 5);
-        }
-
-        // 画一辆帅气跑车
-        function drawFancyCar(x, y, mainColor, isBoosting) {
-            // 1. 车身阴影
-            ctx.fillStyle = "rgba(0,0,0,0.2)";
-            ctx.fillRect(x + 5, y + 5, carW, carH);
-
-            // 2. 帅气的炫酷大尾翼（上方）
-            ctx.fillStyle = "#111";
-            ctx.fillRect(x - 4, y + carH - 10, carW + 8, 8);
-            ctx.fillRect(x, y + carH - 15, 6, 8);
-            ctx.fillRect(x + carW - 6, y + carH - 15, 6, 8);
-
-            // 3. 车身主架构
-            ctx.fillStyle = mainColor;
-            ctx.fillRect(x, y + 10, carW, carH - 22); // 主体
+        // 处理动态弯道逻辑
+        function updateTrackAndCurve() {
+            // 根据剧本实时改变弯曲度
+            let scenario = curveScenarios.find(s => player.distance < s.dist);
+            let targetCurve = scenario ? scenario.target : 0;
             
-            // 流线型车头
-            ctx.beginPath();
-            ctx.moveTo(x, y + 15);
-            ctx.lineTo(x + carW / 2, y);
-            ctx.lineTo(x + carW, y + 15);
-            ctx.fill();
+            // 让弯道平滑过渡
+            trackCurve += (targetCurve - trackCurve) * 0.02;
 
-            // 4. 四个黑宽轮毂
-            ctx.fillStyle = "#1e272e";
-            ctx.fillRect(x - 5, y + 12, 5, 16);  ctx.fillRect(x + carW, y + 12, 5, 16);
-            ctx.fillRect(x - 5, y + 50, 5, 18);  ctx.fillRect(x + carW, y + 50, 5, 18);
-
-            // 5. 炫酷车窗（前挡风玻璃）
-            ctx.fillStyle = "#dff9fb";
-            ctx.fillRect(x + 6, y + 22, carW - 12, 12);
-            ctx.fillStyle = "#111"; // 后视镜
-            ctx.fillRect(x - 3, y + 22, 3, 5); ctx.fillRect(x + carW, y + 22, 3, 5);
-
-            // 6. 车身赛车拉花（中间两条杠）
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(x + carW/2 - 5, y + 10, 3, carH - 30);
-            ctx.fillRect(x + carW/2 + 2, y + 10, 3, carH - 30);
-
-            // 7. 喷火特效（如果是玩家在加速）
-            if (isBoosting) {
-                ctx.fillStyle = "#e67e22";
-                ctx.fillRect(x + 10, y + carH, 6, 15 + Math.random() * 10);
-                ctx.fillRect(x + carW - 16, y + carH, 6, 15 + Math.random() * 10);
-                ctx.fillStyle = "#f1c40f";
-                ctx.fillRect(x + 11, y + carH, 4, 8);
-                ctx.fillRect(x + carW - 15, y + carH, 4, 8);
-            }
-        }
-
-        // 6. 侧边进度条控制逻辑
-        function setupProgressIndicators() {
-            progressBar.querySelectorAll('.player-indicator, .ai-indicator').forEach(el => el.remove());
-            
-            // 创建玩家指示点
-            let pDot = document.createElement("div");
-            pDot.className = "player-indicator";
-            pDot.id = "p-dot";
-            progressBar.appendChild(pDot);
-
-            // 创建AI指示点
-            aiCars.forEach(ai => {
-                let aDot = document.createElement("div");
-                aDot.className = "ai-indicator";
-                aDot.id = `ai-dot-${ai.id}`;
-                aDot.style.background = ai.color;
-                progressBar.appendChild(aDot);
-            });
-        }
-
-        function updateProgress() {
-            let totalH = 430; // 可滑动总高度
-            
-            // 计算更新玩家位置
-            let pPercent = player.distance / TRACK_LENGTH;
-            if(pPercent > 1) pPercent = 1;
-            document.getElementById("p-dot").style.bottom = (pPercent * totalH) + "px";
-
-            // 计算更新AI位置
-            aiCars.forEach(ai => {
-                let aiPercent = ai.distance / TRACK_LENGTH;
-                if(aiPercent > 1) aiPercent = 1;
-                document.getElementById(`ai-dot-${ai.id}`).style.bottom = (aiPercent * totalH) + "px";
-            });
-        }
-
-        function resetGame() {
-            clearInterval(gameInterval);
-            player.distance = 0;
-            player.speed = 0;
-            player.x = 157;
-            
-            // 重置对手
-            aiCars = [
-                { id: 1, name: "红魔号", x: 45, y: 350, distance: 0, speed: 0, maxSpeed: 12.2 + Math.random(), color: "#e74c3c" },
-                { id: 2, name: "闪电绿", x: 157, y: 180, distance: 0, speed: 0, maxSpeed: 12.5 + Math.random(), color: "#2ecc71" },
-                { id: 3, name: "大黄蜂", x: 270, y: 350, distance: 0, speed: 0, maxSpeed: 12.8 + Math.random(), color: "#f1c40f" }
-            ];
-            
-            bgOffset = 0;
-            gameRunning = false;
-            startGame();
-            canvas.focus();
-        }
-
-        window.onload = function() {
-            window.focus();
-            canvas.focus();
-            drawScene();
-        };
-    </script>
-</body>
-</html>
+            // 关键：弯道惯性影响！如果不按方向键，赛车会受速度影响往弯道反方向漂移
+            if (player.speed > 1
