@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>疯狂赛车小游戏</title>
+    <style>
+        body {
+            background-color: #2c3e50;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 { margin: 10px 0 5px 0; font-size: 24px; }
+        #score-board { font-size: 20px; margin-bottom: 10px; }
+        canvas {
+            background-color: #34495e;
+            border: 4px solid #ecf0f1;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            outline: none;
+        }
+        .tip-text {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #f1c40f;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .back-btn {
+            margin-top: 15px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-btn:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <h1>🏎️ 疯狂赛车</h1>
+    <div id="score-board">得分: <span id="score">0</span></div>
+    <canvas id="roadCanvas" width="300" height="450" tabindex="1"></canvas>
+    
+    <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 开始赛车</div>
+    <a href="../" class="back-btn">← 返回游戏大厅</a>
+
+    <script>
+        const canvas = document.getElementById("roadCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const tipElement = document.getElementById("gameTip");
+
+        // 赛车设置
+        const carWidth = 40;
+        const carHeight = 70;
+        let myCarX = 130; // 初始居中
+        const myCarY = 360;
+        let myCarSpeed = 8;
+
+        let obstacles = [];
+        let score = 0;
+        let gameInterval;
+        let gameRunning = false;
+        let obstacleSpeed = 4; // 障碍车向下移动速度
+        let spawnTimer = 0;
+
+        window.addEventListener("keydown", controlCar);
+
+        function startGame() {
+            if (gameRunning) return;
+            gameRunning = true;
+            tipElement.innerText = "🎮 游戏进行中 (用 ← → 方向键躲避)";
+            gameInterval = setInterval(updateGame, 20); // ~50fps 运行流畅度
+        }
+
+        function updateGame() {
+            // 1. 生成障碍车
+            spawnTimer++;
+            if (spawnTimer > 60) { // 每隔一段时间放一辆车
+                let lanes = [25, 115, 205]; // 三条车道
+                let randomLane = lanes[Math.floor(Math.random() * lanes.length)];
+                obstacles.push({ x: randomLane, y: -70, width: carWidth, height: carHeight, color: randomColor() });
+                spawnTimer = 0;
+            }
+
+            // 2. 移动障碍车并检查碰撞
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].y += obstacleSpeed;
+
+                // 碰撞检测
+                if (checkCollision(myCarX, myCarY, carWidth, carHeight, obstacles[i])) {
+                    gameOver();
+                    return;
+                }
+
+                // 超过边界得分
+                if (obstacles[i].y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    score += 10;
+                    scoreElement.innerText = score;
+                    // 随着得分增加，速度稍微加快一点增加挑战性
+                    if(score % 50 === 0) obstacleSpeed += 0.5;
+                }
+            }
+
+            drawGrid();
+        }
+
+        function drawGrid() {
+            // 绘制公路背景
+            ctx.fillStyle = "#555";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制车道分界虚线
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 4;
+            ctx.setLineDash([20, 20]);
+            ctx.beginPath();
+            ctx.moveTo(100, 0); ctx.lineTo(100, canvas.height);
+            ctx.moveTo(200, 0); ctx.lineTo(200, canvas.height);
+            ctx.stroke();
+
+            // 绘制玩家玩家赛车 (蓝色)
+            ctx.fillStyle = "#3498db";
+            ctx.fillRect(myCarX, myCarY, carWidth, carHeight);
+            // 车轮
+            ctx.fillStyle = "#000";
+            ctx.fillRect(myCarX-4, myCarY+10, 4, 15); ctx.fillRect(myCarX+carWidth, myCarY+10, 4, 15);
+            ctx.fillRect(myCarX-4, myCarY+45, 4, 15); ctx.fillRect(myCarX+carWidth, myCarY+45, 4, 15);
+
+            // 绘制障碍车
+            obstacles.forEach(obs => {
+                ctx.fillStyle = obs.color;
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(obs.x-4, obs.y+10, 4, 15); ctx.fillRect(obs.x+obs.width, obs.y+10, 4, 15);
+                ctx.fillRect(obs.x-4, obs.y+45, 4, 15); ctx.fillRect(obs.x+obs.width, obs.y+45, 4, 15);
+            });
+        }
+
+        function controlCar(event) {
+            const keyPressed = event.keyCode;
+            if([32, 37, 38, 39, 40].includes(keyPressed)) event.preventDefault();
+
+            if (keyPressed === 13 && !gameRunning) {
+                resetGame();
+                return;
+            }
+
+            if (!gameRunning) return;
+
+            if (keyPressed === 37 && myCarX > 10) { // 向左
+                myCarX -= 30; 
+            }
+            if (keyPressed === 39 && myCarX < canvas.width - carWidth - 10) { // 向右
+                myCarX += 30;
+            }
+        }
+
+        function checkCollision(x1, y1, w1, h1, obs) {
+            return (x1 < obs.x + obs.width && x1 + w1 > obs.x && y1 < obs.y + obs.height && y1 + h1 > obs.y);
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            gameRunning = false;
+            tipElement.innerText = "💥 💥 撞车啦！按回车键 (Enter) 重新开赛";
+            alert(`游戏结束！您的最终赛车得分是: ${score}`);
+        }
+
+        function resetGame() {
+            clearInterval(gameInterval);
+            myCarX = 130;
+            obstacles = [];
+            score = 0;
+            obstacleSpeed = 4;
+            scoreElement.innerText = score;
+            spawnTimer = 0;
+            gameRunning = false;
+            startGame();
+            canvas.focus();
+        }
+
+        function randomColor() {
+            const colors = ["#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#e67e22"];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        window.onload = function() {
+            window.focus();
+            canvas.focus();
+            drawGrid();
+        };
+    </script>
+</body>
+</html>
