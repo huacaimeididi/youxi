@@ -71,15 +71,18 @@
         #btn-right { grid-column: 3; grid-row: 2; }
         #btn-down { grid-column: 2; grid-row: 3; }
 
-        .btn-reset {
+        .tip-text {
             margin-top: 15px;
-            padding: 8px 20px;
             font-size: 16px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            color: #f1c40f;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -89,6 +92,8 @@
     <div id="score-board">得分: <span id="score">0</span></div>
     <canvas id="gameCanvas" width="400" height="400" tabindex="1"></canvas>
 
+    <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 开始游戏</div>
+
     <div class="controls">
         <div class="btn-ctrl" id="btn-up" onclick="handleControl('UP')">↑</div>
         <div class="btn-ctrl" id="btn-left" onclick="handleControl('LEFT')">←</div>
@@ -96,12 +101,11 @@
         <div class="btn-ctrl" id="btn-down" onclick="handleControl('DOWN')">↓</div>
     </div>
 
-    <button class="btn-reset" onclick="resetGame()">重新开始</button>
-
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreElement = document.getElementById("score");
+        const tipElement = document.getElementById("gameTip");
 
         const gridSize = 20;
         const tileCount = canvas.width / gridSize;
@@ -112,100 +116,12 @@
         let dy = 0;
         let score = 0;
         let gameInterval;
-        let gameSpeed = 600; // 【再次修改】速度再减慢一半（从300ms调到600ms）
+        let gameSpeed = 600; 
+        let gameRunning = false; // 记录游戏是否在运行中
 
         window.addEventListener("keydown", changeDirection);
 
         function startGame() {
-            gameInterval = setInterval(update, gameSpeed);
-        }
-
-        function update() {
-            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount || collisionCheck(head)) {
-                clearInterval(gameInterval);
-                alert(`游戏结束！您的最终得分是: ${score}`);
-                return;
-            }
-
-            snake.unshift(head);
-
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                scoreElement.innerText = score;
-                generateFood();
-            } else {
-                snake.pop();
-            }
-
-            draw();
-        }
-
-        function draw() {
-            ctx.fillStyle = "#34495e";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            snake.forEach((part, index) => {
-                if(index === 0) ctx.fillStyle = "#27ae60";
-                else ctx.fillStyle = "#2ecc71";
-                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2);
-            });
-
-            ctx.fillStyle = "#e74c3c";
-            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
-        }
-
-        function changeDirection(event) {
-            const keyPressed = event.keyCode;
-            
-            if([37, 38, 39, 40].includes(keyPressed)) {
-                event.preventDefault();
-            }
-
-            if (keyPressed === 37 && dx === 0) { dx = -1; dy = 0; }
-            if (keyPressed === 38 && dy === 0) { dx = 0; dy = -1; }
-            if (keyPressed === 39 && dx === 0) { dx = 1; dy = 0; }
-            if (keyPressed === 40 && dy === 0) { dx = 0; dy = 1; }
-        }
-
-        function handleControl(dir) {
-            if (dir === 'LEFT' && dx === 0) { dx = -1; dy = 0; }
-            if (dir === 'UP' && dy === 0) { dx = 0; dy = -1; }
-            if (dir === 'RIGHT' && dx === 0) { dx = 1; dy = 0; }
-            if (dir === 'DOWN' && dy === 0) { dx = 0; dy = 1; }
-        }
-
-        function collisionCheck(head) {
-            return snake.some((part, index) => index !== 0 && part.x === head.x && part.y === head.y);
-        }
-
-        function generateFood() {
-            food.x = Math.floor(Math.random() * tileCount);
-            food.y = Math.floor(Math.random() * tileCount);
-            if (snake.some(part => part.x === food.x && part.y === food.y)) {
-                generateFood();
-            }
-        }
-
-        function resetGame() {
-            clearInterval(gameInterval);
-            snake = [{x: 10, y: 10}];
-            dx = 1;
-            dy = 0;
-            score = 0;
-            scoreElement.innerText = score;
-            generateFood();
-            startGame();
-            canvas.focus();
-        }
-
-        window.onload = function() {
-            window.focus();
-            canvas.focus();
-            generateFood();
-            startGame();
-        };
-    </script>
-</body>
-</html>
+            if (gameRunning) return;
+            gameRunning = true;
+            tipElement.innerText = "🎮 游戏进行
