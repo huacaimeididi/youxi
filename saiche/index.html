@@ -31,7 +31,6 @@
         .tip-text { font-size: 14px; color: #f1c40f; font-weight: bold; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         
-        /* 侧边 3D 竞技进度条 */
         #progress-box {
             position: absolute;
             left: 30px;
@@ -60,11 +59,12 @@
             border: 3px solid #00ffcc;
             box-shadow: 0 0 30px rgba(0,255,204,0.2);
             position: relative;
+            background: #000;
         }
         .back-btn { position: absolute; bottom: 20px; color: #444; text-decoration: none; font-size: 13px; z-index: 10; }
         .back-btn:hover { color: #fff; }
+        #error-log { position: absolute; bottom: 10px; color: #ff4757; font-size: 12px; width: 90%; text-align: center; }
     </style>
-    <!-- 引入行业标准的公共 Three.js 3D 引擎库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -75,26 +75,32 @@
         <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 3D引擎点火起步！</div>
     </div>
 
-    <!-- 竞技进度 -->
     <div id="progress-box">
         <div id="p-dot" class="dot" style="bottom: 0px;"></div>
         <div id="ai1-dot" class="dot" style="bottom: 0px;"></div>
         <div id="ai2-dot" class="dot" style="bottom: 0px;"></div>
     </div>
 
-    <div id="canvas-container"></div>
+    <div id="canvas-container">
+        <div id="error-log"></div>
+    </div>
     
     <a href="../" class="back-btn">← 返回游戏大厅</a>
 
     <script>
+        // 捕获可能出现的初始化错误
+        window.onerror = function(msg, url, line) {
+            document.getElementById('error-log').innerText = "错误提示: " + msg + " (第" + line + "行)";
+        };
+
         const TRACK_LENGTH = 40000;
         const container = document.getElementById('canvas-container');
         
         let scene, camera, renderer;
         let playerCar, ai1Car, ai2Car;
         let pDist = 0, pSpeed = 0, pX = 0;
-        let ai1Dist = 0, ai1Speed = 0, ai1X = -12;
-        let ai2Dist = 0, ai2Speed = 0, ai2X = 12;
+        let ai1Dist = 10, ai1Speed = 0, ai1X = -12;
+        let ai2Dist = 15, ai2Speed = 0, ai2X = 12;
         
         let obstacles = [];
         let neonPoles = [];
@@ -102,83 +108,83 @@
         let gameRunning = false;
         let particles = [];
 
-        // 初始化 3D 场景
         function init3D() {
+            // 1. 创建场景与雾化
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x05050a, 0.005);
 
+            // 2. 创建相机
             camera = new THREE.PerspectiveCamera(60, 600 / 480, 0.1, 1000);
+            camera.position.set(0, 7, 15);
+            camera.lookAt(0, 3, -10);
             
+            // 3. 创建 WebGL 渲染器
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(600, 480);
             renderer.setClearColor(0x05050a, 1);
             container.appendChild(renderer.domElement);
 
-            // 光照系统
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            // 4. 灯光系统
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
             const dirLight = new THREE.DirectionalLight(0x00ffcc, 0.8);
             dirLight.position.set(0, 20, 10);
             scene.add(dirLight);
 
-            // 赛道地面
-            const roadGeo = new THREE.PlaneGeometry(40, 1000);
-            const roadMat = new THREE.MeshStandardMaterial({ color: #15161e });
+            // 5. 赛道地面 (修复颜色引号)
+            const roadGeo = new THREE.PlaneGeometry(40, 2000);
+            const roadMat = new THREE.MeshStandardMaterial({ color: "#15161e", roughness: 0.4 });
             const road = new THREE.Mesh(roadGeo, roadMat);
             road.rotation.x = -Math.PI / 2;
-            road.position.z = -400;
+            road.position.z = -800;
             scene.add(road);
 
-            // 赛道白边线
+            // 6. 赛道边界线
             createTrackLine(-20);
             createTrackLine(20);
 
-            // 纯代码拼装3D超跑：兰博基尼 (毒药绿)
-            playerCar = create3DSuperCar(0x00ffcc, true);
+            // 7. 生成三辆超跑
+            playerCar = create3DSuperCar("#00ffcc");
             scene.add(playerCar);
 
-            // 法拉利
-            ai1Car = create3DSuperCar(0xff0055, false);
+            ai1Car = create3DSuperCar("#ff0055");
             scene.add(ai1Car);
+            ai1Car.position.set(ai1X, 0, -10);
 
-            // 帕加尼
-            ai2Car = create3DSuperCar(0xffca28, false);
+            ai2Car = create3DSuperCar("#ffca28");
             scene.add(ai2Car);
+            ai2Car.position.set(ai2X, 0, -15);
 
-            // 生成路旁霓虹流光柱
-            for(let i=0; i<30; i++) {
-                spawnNeonPole(i * -30);
+            // 8. 沿途生成霓虹灯柱
+            for(let i = 0; i < 40; i++) {
+                spawnNeonPole(i * -25);
             }
 
-            // 相机初始几何视角
-            camera.position.set(0, 7, 15);
-            camera.lookAt(0, 3, -10);
-
-            // 渲染单帧初始画面
+            // 9. 强制渲染首帧，防止未启动时黑屏
             renderer.render(scene, camera);
         }
 
-        // 3D 车辆模型拼装函数（纯数学几何，不需要外带资源文件）
-        function create3DSuperCar(colorHex, isPlayer) {
+        // 组装赛车模型
+        function create3DSuperCar(colorHex) {
             const carGroup = new THREE.Group();
 
-            // 底盘
+            // 车身
             const bodyGeo = new THREE.BoxGeometry(3.6, 0.6, 7);
             const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.2 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.position.y = 0.5;
             carGroup.add(body);
 
-            // 尖锐流线型舱盖 (兰博基尼前倾风挡)
+            // 挡风玻璃舱
             const cabinGeo = new THREE.BoxGeometry(2.8, 0.6, 3.5);
-            const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.1 });
+            const cabinMat = new THREE.MeshStandardMaterial({ color: "#111115", roughness: 0.1 });
             const cabin = new THREE.Mesh(cabinGeo, cabinMat);
             cabin.position.set(0, 1.0, -0.2);
             carGroup.add(cabin);
 
-            // 狂野大型悬浮 3D 尾翼
+            // 大尾翼
             const spoilerGeo = new THREE.BoxGeometry(4.4, 0.15, 0.8);
-            const spoilerMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+            const spoilerMat = new THREE.MeshStandardMaterial({ color: "#111111" });
             const spoiler = new THREE.Mesh(spoilerGeo, spoilerMat);
             spoiler.position.set(0, 1.4, 3.2);
             carGroup.add(spoiler);
@@ -191,10 +197,9 @@
             wingR.position.x = 2.1;
             carGroup.add(wingR);
 
-            // 四个轮子
+            // 车轮
             const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 12);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-            
+            const wheelMat = new THREE.MeshStandardMaterial({ color: "#222222", roughness: 0.8 });
             const wheels = [
                 {x: -1.9, y: 0.5, z: -2}, {x: 1.9, y: 0.5, z: -2},
                 {x: -1.9, y: 0.5, z: 2.2}, {x: 1.9, y: 0.5, z: 2.2}
@@ -210,30 +215,31 @@
         }
 
         function createTrackLine(xPos) {
-            const lineGeo = new THREE.PlaneGeometry(0.4, 1000);
-            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const lineGeo = new THREE.PlaneGeometry(0.4, 2000);
+            const lineMat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
             const line = new THREE.Mesh(lineGeo, lineMat);
             line.rotation.x = -Math.PI / 2;
-            line.position.set(xPos, 0.01, -400);
+            line.position.set(xPos, 0.02, -800);
             scene.add(line);
         }
 
         function spawnNeonPole(zPos) {
             const poleGeo = new THREE.CylinderGeometry(0.15, 0.15, 12, 6);
-            const poleMat = new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? 0x00ffcc : 0xff0055 });
+            const poleColor = Math.random() > 0.5 ? "#00ffcc" : "#ff0055";
+            const poleMat = new THREE.MeshBasicMaterial({ color: poleColor });
             
             const leftPole = new THREE.Mesh(poleGeo, poleMat);
-            leftPole.position.set(-21, 6, zPos);
+            leftPole.position.set(-22, 6, zPos);
             scene.add(leftPole);
             neonPoles.push(leftPole);
 
             const rightPole = new THREE.Mesh(poleGeo, poleMat);
-            rightPole.position.set(21, 6, zPos);
+            rightPole.position.set(22, 6, zPos);
             scene.add(rightPole);
             neonPoles.push(rightPole);
         }
 
-        // 监听按键
+        // 监听动作
         window.addEventListener("keydown", e => {
             if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) e.preventDefault();
             if(e.key === "Enter" && !gameRunning) { resetGame(); }
@@ -243,96 +249,87 @@
 
         function resetGame() {
             pDist = 0; pSpeed = 0; pX = 0;
-            ai1Dist = 10; ai1Speed = 0; ai1X = -10;
-            ai2Dist = 15; ai2Speed = 0; ai2X = 10;
+            ai1Dist = 10; ai1Speed = 0; ai1X = -12;
+            ai2Dist = 15; ai2Speed = 0; ai2X = 12;
             
             obstacles.forEach(o => scene.remove(o));
             obstacles = [];
 
-            document.getElementById("gameTip").innerText = "🏁 极速狂飙中！[← →] 避震拐弯 [↑] 强制提速";
+            document.getElementById("gameTip").innerText = "🏁 极速飙车中！[← →] 控制车身左右变道";
             gameRunning = true;
             animate();
         }
 
-        // 3D 核心游戏循环主引擎
         function animate() {
             if (!gameRunning) return;
             requestAnimationFrame(animate);
 
-            // 1. 玩家操控与物理惯性
-            if (keys.ArrowUp) { if (pSpeed < 3.2) pSpeed += 0.04; }
-            else if (keys.ArrowDown) { if (pSpeed > 0) pSpeed -= 0.08; }
-            else { if (pSpeed > 0) pSpeed -= 0.015; }
+            // 1. 玩家驾驶手感计算
+            if (keys.ArrowUp) { if (pSpeed < 3.5) pSpeed += 0.05; }
+            else if (keys.ArrowDown) { if (pSpeed > 0) pSpeed -= 0.1; }
+            else { if (pSpeed > 0) pSpeed -= 0.02; }
             if (pSpeed < 0) pSpeed = 0;
 
             if (pSpeed > 0.1) {
-                if (keys.ArrowLeft && pX > -17) pX -= 0.5;
-                if (keys.ArrowRight && pX < 17) pX += 0.5;
+                if (keys.ArrowLeft && pX > -17) pX -= 0.6;
+                if (keys.ArrowRight && pX < 17) pX += 0.6;
             }
             pDist += pSpeed;
 
-            // 2. 动态运镜系统（3D体感的精髓）
-            camera.position.x = pX * 0.7; // 视角微微平移
-            camera.position.y = 7 - (pSpeed * 0.4); // 极速推进时底盘视角降低，增加速度感
-            camera.rotation.z = -(pX - playerCar.position.x) * 0.05; // 转向时车身带起镜头倾斜！
+            // 2. 动感镜头跟随
+            camera.position.x = pX * 0.6;
+            camera.position.y = 7 - (pSpeed * 0.3);
+            camera.rotation.z = -(pX - playerCar.position.x) * 0.03;
             
             playerCar.position.set(pX, 0, 0);
-            playerCar.rotation.y = keys.ArrowLeft ? 0.08 : (keys.ArrowRight ? -0.08 : 0);
 
-            // 3. AI 全面加强型起步追击与堵位逻辑
-            if(ai1Dist < TRACK_LENGTH) { ai1Speed += (2.85 + Math.random()*0.2 - ai1Speed)*0.02; ai1Dist += ai1Speed; }
-            if(ai2Dist < TRACK_LENGTH) { ai2Speed += (2.95 + Math.random()*0.2 - ai2Speed)*0.02; ai2Dist += ai2Speed; }
+            // 3. AI 宿敌前行控制
+            if(ai1Dist < TRACK_LENGTH) { ai1Speed += (3.1 - ai1Speed) * 0.01; ai1Dist += ai1Speed; }
+            if(ai2Dist < TRACK_LENGTH) { ai2Speed += (3.2 - ai2Speed) * 0.01; ai2Dist += ai2Speed; }
             
-            // 智能蛇形堵位：AI 会在前方故意往你的航道靠拢阻挡
-            if (ai1Dist > pDist && ai1Dist - pDist < 120) ai1X += (pX - ai1X) * 0.01;
-            if (ai2Dist > pDist && ai2Dist - pDist < 120) ai2X += (pX - ai2X) * 0.01;
+            // AI 拦截阻挡
+            if (ai1Dist > pDist && ai1Dist - pDist < 150) ai1X += (pX - ai1X) * 0.015;
+            if (ai2Dist > pDist && ai2Dist - pDist < 150) ai2X += (pX - ai2X) * 0.015;
 
             ai1Car.position.set(ai1X, 0, -(ai1Dist - pDist));
             ai2Car.position.set(ai2X, 0, -(ai2Dist - pDist));
 
-            // 4. 循环路灯，保障无尽空间感
+            // 4. 无缝循环街景柱子
             neonPoles.forEach(pole => {
-                let relativeZ = (pole.position.z - (-pDist)) % 900;
-                if (relativeZ > 0) relativeZ -= 900;
+                let relativeZ = (pole.position.z - (-pDist)) % 800;
+                if (relativeZ > 0) relativeZ -= 800;
                 pole.position.z = relativeZ;
             });
 
-            // 5. 3D 霓虹障碍箱动态生成与检测
-            if (Math.random() < 0.008 && obstacles.length < 3) {
+            // 5. 动态刷新静态路障箱
+            if (Math.random() < 0.01 && obstacles.length < 3) {
                 const obsGeo = new THREE.BoxGeometry(3, 3, 3);
-                const obsMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x552200 });
+                const obsMat = new THREE.MeshStandardMaterial({ color: "#ff9f43", emissive: "#331100" });
                 const obsMesh = new THREE.Mesh(obsGeo, obsMat);
-                obsMesh.position.set(Math.random() * 30 - 15, 1.5, -500 - pDist);
+                obsMesh.position.set(Math.random() * 32 - 16, 1.5, -600 - pDist);
                 scene.add(obsMesh);
                 obstacles.push(obsMesh);
             }
 
-            // 移动与碰撞逻辑
+            // 路障位置校对与减速判断
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 let relZ = obs.position.z - (-pDist);
                 
-                // 碰撞判定
-                if (relZ > -3.5 && relZ < 3.5 && Math.abs(obs.position.x - pX) < 3.2) {
-                    pSpeed = 0.2; // 玩家直接撞停
+                if (relZ > -3.5 && relZ < 3.5 && Math.abs(obs.position.x - pX) < 3.4) {
+                    pSpeed = 0.2; // 剧烈撞停
                     scene.remove(obs);
                     obstacles.splice(i, 1);
                     continue;
                 }
-                // AI 压障碍同样公平减速
-                if (relZ > -3.5 && relZ < 3.5) {
-                    if (Math.abs(obs.position.x - ai1X) < 3) ai1Speed = 0.5;
-                    if (Math.abs(obs.position.x - ai2X) < 3) ai2Speed = 0.5;
-                }
-
                 if (relZ > 20) { scene.remove(obs); obstacles.splice(i, 1); }
             }
 
-            // 6. 3D 粒子氮气喷火
+            // 6. 尾焰粒子生成
             if (keys.ArrowUp && pSpeed > 1) createJetFlame();
             updateParticles();
 
-            // 更新仪表盘与指示条
+            // 仪表数值显示
             document.getElementById("speedo").innerText = Math.floor(pSpeed * 110);
             document.getElementById("dist").innerText = Math.floor(pDist);
             
@@ -340,21 +337,19 @@
             document.getElementById("ai1-dot").style.bottom = (Math.min(1, ai1Dist/TRACK_LENGTH) * 336) + "px";
             document.getElementById("ai2-dot").style.bottom = (Math.min(1, ai2Dist/TRACK_LENGTH) * 336) + "px";
 
-            // 判定胜利
-            if (pDist >= TRACK_LENGTH) { gameRunning = false; alert("🎉 逆天改命！你的 3D 兰博基尼拿下了最终胜利！"); }
-            if (ai1Dist >= TRACK_LENGTH || ai2Dist >= TRACK_LENGTH) { gameRunning = false; alert("😭 宿敌率先冲线，下次再来吧！"); }
+            if (pDist >= TRACK_LENGTH) { gameRunning = false; alert("🎉 奇迹！你斩获了4万米3D对决的胜利！"); }
+            if (ai1Dist >= TRACK_LENGTH || ai2Dist >= TRACK_LENGTH) { gameRunning = false; alert("😭 宿敌捷足先登！"); }
 
             renderer.render(scene, camera);
         }
 
-        // 3D 氮气蓝色粒子池
         function createJetFlame() {
-            const pGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-            const pMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            const pGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const pMat = new THREE.MeshBasicMaterial({ color: "#00ffff" });
             const p = new THREE.Mesh(pGeo, pMat);
             p.position.set(pX + (Math.random()*1.2 - 0.6), 0.5, 3.5);
             scene.add(p);
-            particles.push({ mesh: p, life: 1.0, vx: Math.random()*0.1-0.05, vz: 1.5 });
+            particles.push({ mesh: p, life: 1.0, vx: Math.random()*0.1-0.05, vz: 1.6 });
         }
 
         function updateParticles() {
@@ -362,14 +357,8 @@
                 let p = particles[i];
                 p.mesh.position.z += p.vz;
                 p.mesh.position.x += p.vx;
-                p.life -= 0.05;
+                p.life -= 0.06;
                 p.mesh.scale.set(p.life, p.life, p.life);
                 if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
             }
         }
-
-        // 启动场景
-        init3D();
-    </script>
-</body>
-</html>
