@@ -20,6 +20,21 @@
                 <div class="title-decoration">✈ ✈ ✈</div>
             </div>
 
+            <!-- 小男孩飞行员展示 -->
+            <div class="pilot-showcase">
+                <div class="pilot-avatar">
+                    <div class="pilot-helmet">🪖</div>
+                    <div class="pilot-body">
+                        <div class="pilot-scarf">🧣</div>
+                        <div class="pilot-uniform">👔</div>
+                    </div>
+                </div>
+                <div class="pilot-info">
+                    <h3>王牌飞行员 小杰</h3>
+                    <p>"准备起飞！目标：击落敌机！"</p>
+                </div>
+            </div>
+
             <div class="fighter-selection">
                 <h2>选择你的战机</h2>
                 <div class="fighters-grid">
@@ -83,7 +98,11 @@
                 </div>
                 <div class="control-group">
                     <div class="key">空格</div>
-                    <span>射击</span>
+                    <span>机炮射击</span>
+                </div>
+                <div class="control-group">
+                    <div class="key">回车</div>
+                    <span>发射导弹</span>
                 </div>
                 <div class="control-group mobile">
                     <div class="key">触摸</div>
@@ -92,7 +111,7 @@
             </div>
 
             <button id="start-btn" class="btn-primary">开始战斗</button>
-            <p class="version">五局三胜制 | 跨平台支持</p>
+            <p class="version">五局三胜制 | 跨平台支持 | 导弹追踪系统</p>
         </div>
 
         <!-- 游戏界面 -->
@@ -123,8 +142,14 @@
                         <span class="health-label">装甲</span>
                     </div>
                     <div class="weapon-info">
-                        <span id="ammo-count">∞</span>
-                        <span class="weapon-label">机炮</span>
+                        <div class="weapon-item">
+                            <span id="ammo-count">∞</span>
+                            <span class="weapon-label">机炮</span>
+                        </div>
+                        <div class="weapon-item missile">
+                            <span id="missile-count">3</span>
+                            <span class="weapon-label">导弹</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -133,7 +158,10 @@
                 <div id="joystick-area" class="joystick-area">
                     <div id="joystick-knob" class="joystick-knob"></div>
                 </div>
-                <div id="fire-btn" class="fire-btn">🔥</div>
+                <div class="touch-buttons">
+                    <div id="fire-btn" class="fire-btn">🔥</div>
+                    <div id="missile-btn" class="missile-btn">🚀</div>
+                </div>
             </div>
 
             <div id="message-area"></div>
