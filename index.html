@@ -3,90 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的个人游戏厅</title>
+    <title>NEON ARCADE - 我的电竞游戏厅</title>
     <style>
+        :root {
+            --primary: #00ffcc;
+            --accent-snake: #2ecc71;
+            --accent-car: #ff0055;
+            --accent-plane: #3498db;
+        }
+
         body {
-            background-color: #1a252f;
+            background: radial-gradient(circle at center, #111424 0%, #050608 100%);
             color: #fff;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            overflow-x: hidden;
         }
 
+        /* 霓虹大标题 */
         h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
-            color: #f1c40f;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 42px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5), 0 0 30px rgba(0, 255, 204, 0.2);
         }
 
-        p {
-            color: #bdc3c7;
+        .subtitle {
+            color: #636e72;
+            font-size: 16px;
             margin-bottom: 40px;
+            letter-spacing: 1px;
         }
 
-        .game-container {
+        /* 游戏卡片容器 */
+        .game-grid {
             display: flex;
             gap: 30px;
             flex-wrap: wrap;
             justify-content: center;
+            max-width: 1000px;
+            padding: 20px;
         }
 
+        /* 基础卡片样式 */
         .game-card {
-            background-color: #2c3e50;
-            border: 3px solid #34495e;
-            border-radius: 15px;
-            width: 240px;
-            padding: 20px;
+            background: rgba(30, 32, 47, 0.7);
+            border: 2px solid #2d3142;
+            border-radius: 16px;
+            width: 260px;
+            padding: 30px 20px;
             text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            transition: transform 0.3s, border-color 0.3s;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-decoration: none;
             color: inherit;
+            position: relative;
+            overflow: hidden;
         }
 
-        .game-card:hover {
-            transform: translateY(-10px);
-            border-color: #2ecc71;
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: transparent;
+            transition: all 0.3s;
         }
 
+        /* 悬浮动效（各自游戏专属颜色发光） */
+        .card-snake:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent-snake);
+            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2), 0 0 15px rgba(46, 204, 113, 0.2);
+        }
+        .card-snake:hover .game-icon { text-shadow: 0 0 15px var(--accent-snake); }
+        .card-snake::before { background: var(--accent-snake); }
+
+        .card-car:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent-car);
+            box-shadow: 0 15px 30px rgba(255, 0, 85, 0.2), 0 0 15px rgba(255, 0, 85, 0.2);
+        }
+        .card-car:hover .game-icon { text-shadow: 0 0 15px var(--accent-car); }
+        .card-car::before { background: var(--accent-car); }
+
+        .card-plane:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent-plane);
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.2), 0 0 15px rgba(52, 152, 219, 0.2);
+        }
+        .card-plane:hover .game-icon { text-shadow: 0 0 15px var(--accent-plane); }
+        .card-plane::before { background: var(--accent-plane); }
+
+        /* 卡片内部元素 */
         .game-icon {
-            font-size: 50px;
-            margin-bottom: 15px;
+            font-size: 64px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            display: inline-block;
+        }
+        
+        .game-card:hover .game-icon {
+            transform: scale(1.15) rotate(-5deg);
         }
 
         .game-title {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
         }
 
         .game-desc {
             font-size: 14px;
-            color: #95a5a6;
+            color: #b2bec3;
+            line-height: 1.6;
         }
+
+        .play-btn {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #444;
+            transition: all 0.3s;
+        }
+        .card-snake:hover .play-btn { background: var(--accent-snake); color: #111; border-color: var(--accent-snake); box-shadow: 0 0 10px var(--accent-snake); }
+        .card-car:hover .play-btn { background: var(--accent-car); color: #fff; border-color: var(--accent-car); box-shadow: 0 0 10px var(--accent-car); }
+        .card-plane:hover .play-btn { background: var(--accent-plane); color: #fff; border-color: var(--accent-plane); box-shadow: 0 0 10px var(--accent-plane); }
     </style>
 </head>
 <body>
 
-    <h1>🎮 我的个人微型游戏厅</h1>
-    <p>点击下方卡片选择你想玩的网页游戏：</p>
+    <h1>🎮 Neon Arcade</h1>
+    <div class="subtitle">Personal Web Game Hub | 个人独立游戏空间</div>
 
-    <div class="game-container">
-        <a href="./tanchishe/" class="game-card">
+    <div class="game-grid">
+        <a href="./tanchishe/" class="game-card card-snake">
             <div class="game-icon">🐍</div>
             <div class="game-title">经典贪吃蛇</div>
-            <div class="game-desc">龟速复古模式。键盘回车开始，方向键控制。</div>
+            <div class="game-desc">龟速复古模式。键盘回车开始，纯方向键流畅转向。</div>
+            <div class="play-btn">START GAME</div>
         </a>
 
-        <a href="./saiche/" class="game-card">
+        <a href="./saiche/" class="game-card card-car">
             <div class="game-icon">🏎️</div>
-            <div class="game-title">疯狂赛车</div>
-            <div class="game-desc">躲避前方障碍车辆。回车键开始，左右方向键闪避！</div>
+            <div class="game-title">超跑拉力赛</div>
+            <div class="game-desc">驾驶兰博基尼，在4万米魔鬼变道中决战法拉利与帕加尼！</div>
+            <div class="play-btn">START GAME</div>
+        </a>
+
+        <a href="./feiji/" class="game-card card-plane">
+            <div class="game-icon">✈️</div>
+            <div class="game-title">雷霆战机</div>
+            <div class="game-desc">经典纵版弹幕射击游戏。击碎敌机，迎击终极 Boss！</div>
+            <div class="play-btn">START GAME</div>
         </a>
     </div>
 
