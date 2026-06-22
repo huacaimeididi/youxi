@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>超跑世纪对决：40000米巅峰拉力</title>
+    <title>超跑世纪决战：40000米巅峰拉力</title>
     <style>
         body {
-            background-color: #0d0e15;
+            background-color: #050508;
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -17,7 +17,7 @@
             margin: 0;
             overflow: hidden;
         }
-        h1 { margin: 5px 0; font-size: 26px; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.3); }
+        h1 { margin: 5px 0; font-size: 26px; color: #00ffcc; text-shadow: 0 0 15px rgba(0,255,204,0.4); }
         
         .game-layout {
             display: flex;
@@ -25,15 +25,13 @@
             gap: 25px;
         }
 
-        /* 进度条样式 */
         .progress-container {
             width: 32px;
             height: 460px;
             background: #111;
-            border: 3px solid #444;
+            border: 3px solid #333;
             border-radius: 12px;
             position: relative;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
         }
         .progress-finish {
             position: absolute;
@@ -41,14 +39,13 @@
             background-image: linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), 
                               linear-gradient(45deg, #000 25%, #fff 25%, #fff 75%, #000 75%, #000);
             background-size: 8px 8px;
-            background-position: 0 0, 4px 4px;
             border-radius: 8px 8px 0 0;
         }
         .player-indicator {
             position: absolute;
             left: 5px; width: 14px; height: 14px;
-            background: #39ff14; border: 2px solid #fff; border-radius: 50%;
-            box-shadow: 0 0 8px #39ff14;
+            background: #00ffcc; border: 2px solid #fff; border-radius: 50%;
+            box-shadow: 0 0 8px #00ffcc;
             transition: bottom 0.1s linear;
             z-index: 3;
         }
@@ -60,9 +57,9 @@
         }
 
         canvas {
-            background-color: #2c3e50;
-            border: 4px solid #444;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            background-color: #1a1a24;
+            border: 4px solid #333;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
             outline: none;
         }
         .tip-text {
@@ -73,23 +70,22 @@
             animation: blink 1s infinite;
         }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .back-btn { margin-top: 12px; color: #555; text-decoration: none; font-size: 14px; }
+        .back-btn { margin-top: 12px; color: #444; text-decoration: none; font-size: 14px; }
         .back-btn:hover { color: #fff; }
     </style>
 </head>
 <body>
 
-    <h1>🏎️ 超跑世纪决战：兰博基尼 vs 法拉利 & 帕加尼</h1>
+    <h1>🏎️ NEON SPEED: 兰博基尼 极速对决</h1>
     
     <div class="game-layout">
         <div class="progress-container" id="progressBar">
             <div class="progress-finish"></div>
         </div>
-
-        <canvas id="roadCanvas" width="400" height="480" tabindex="1"></canvas>
+        <canvas id="roadCanvas" width="440" height="480" tabindex="1"></canvas>
     </div>
     
-    <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 启动兰博基尼，决战40000米！</div>
+    <div class="tip-text" id="gameTip">⌨️ 按 Enter 键点火起步，AI已全面加强！</div>
     <a href="../" class="back-btn">← 返回游戏大厅</a>
 
     <script>
@@ -98,46 +94,39 @@
         const tipElement = document.getElementById("gameTip");
         const progressBar = document.getElementById("progressBar");
 
-        // 【修改5】长度再增加1万米，总长 40000 米
         const TRACK_LENGTH = 40000; 
+        const carW = 54;
+        const carH = 80;
 
-        const carW = 46;
-        const carH = 78;
-
-        // 【修改2】主控赛车：兰博基尼（Lamborghini Venom）
         let player = {
-            type: "lamborghini",
-            x: 177,
-            y: 370,
+            x: 193,
+            y: 360,
             distance: 0,
             speed: 0,
-            maxSpeed: 19,
-            acc: 0.28,
-            dec: 0.12,
-            color: "#39ff14" // 荧光绿
+            maxSpeed: 24, // 玩家极速提升
+            acc: 0.35,
+            dec: 0.15,
+            color: "#00ffcc"
         };
 
-        // 【修改2】对手跑车：法拉利、帕加尼
+        // AI 宿敌全面加强：初始速度和最高速度提高，具备攻击性
         let aiCars = [
-            { id: 1, type: "ferrari", name: "法拉利 LaFerrari", x: 70, distance: 0, speed: 0, maxSpeed: 16.5, color: "#e74c3c", baseMaxSpeed: 16.5 },
-            { id: 2, type: "pagani", name: "帕加尼 Huayra", x: 280, distance: 0, speed: 0, maxSpeed: 17.0, color: "#34495e", baseMaxSpeed: 17.0 }
+            { id: 1, type: "ferrari", name: "法拉利 LaFerrari", x: 80, distance: 10, speed: 0, maxSpeed: 21.5, color: "#ff003c" },
+            { id: 2, type: "pagani", name: "帕加尼 Huayra", x: 280, distance: 10, speed: 0, maxSpeed: 22.0, color: "#a4b0be" }
         ];
 
         let obstacles = [];
         let trackCurve = 0;       
         let bgOffset = 0;
 
-        // 【修改4】更密集的极速大弯道场景
         const curveScenarios = [
-            {dist: 2000, target: 4},    // 大右弯
-            {dist: 6000, target: -5},   // 大左弯
-            {dist: 10000, target: 0},   // 直道蓄力
-            {dist: 14000, target: 6},   // 兰博基尼全开右死弯
-            {dist: 19000, target: -6},  // 急左弯
-            {dist: 23000, target: 3},   
-            {dist: 28000, target: -4},  
-            {dist: 34000, target: 7},   // 终极魔鬼右摆弯
-            {dist: 39000, target: 0}    // 冲刺直道
+            {dist: 3000, target: 5},    
+            {dist: 8000, target: -6},   
+            {dist: 14000, target: 0},   
+            {dist: 20000, target: 7},   
+            {dist: 27000, target: -7},  
+            {dist: 35000, target: 8},   
+            {dist: 39000, target: 0}    
         ];
 
         let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
@@ -156,7 +145,7 @@
 
         function startGame() {
             gameRunning = true;
-            tipElement.innerText = "🏁 [↑加速] [← →变道] 弯道会产生强大离心力，注意控制车身！";
+            tipElement.innerText = "🏁 [↑加速] [← →变道] 弯道极其猛烈，别被法拉利超车了！";
             setupProgressIndicators();
             gameInterval = setInterval(gameLoop, 20);
         }
@@ -182,18 +171,18 @@
             if (player.speed < 0) player.speed = 0;
 
             if (player.speed > 0.5) {
-                if (keys.ArrowLeft) player.x -= 4.5;
-                if (keys.ArrowRight) player.x += 4.5;
+                if (keys.ArrowLeft) player.x -= 5.5;
+                if (keys.ArrowRight) player.x += 5.5;
             }
         }
 
         function updateTrackAndCurve() {
             let scenario = curveScenarios.find(s => player.distance < s.dist);
             let targetCurve = scenario ? scenario.target : 0;
-            trackCurve += (targetCurve - trackCurve) * 0.02;
+            trackCurve += (targetCurve - trackCurve) * 0.025;
 
             if (player.speed > 1) {
-                player.x -= trackCurve * (player.speed / player.maxSpeed) * 0.45;
+                player.x -= trackCurve * (player.speed / player.maxSpeed) * 0.55;
             }
         }
 
@@ -203,46 +192,46 @@
 
             aiCars.forEach(ai => {
                 if (ai.distance < TRACK_LENGTH) {
-                    // AI在自身最大车速附近动态震荡
-                    let targetSpeed = ai.maxSpeed + (Math.random() * 1.2 - 0.6);
-                    ai.speed += (targetSpeed > ai.speed) ? 0.15 : -0.1;
+                    // AI 的加速更加激进
+                    if (ai.speed < ai.maxSpeed) ai.speed += 0.3;
                     ai.distance += ai.speed;
                 } else {
                     ai.speed = 0;
                 }
                 
-                // AI 同样会受离心力拉扯影响
-                ai.x -= trackCurve * (ai.speed / 19) * 0.45;
-                ai.x += (Math.random() * 2 - 1) * 0.2; 
+                // AI 弯道修正
+                ai.x -= trackCurve * (ai.speed / 24) * 0.55;
+                
+                // 智能拦截：AI 离你近的时候会试图变道挡你的路
+                if (Math.abs(ai.distance - player.distance) < 200) {
+                    ai.x += (player.x - ai.x) * 0.015;
+                } else {
+                    ai.x += (Math.random() * 2 - 1) * 0.4;
+                }
 
-                // 【修改3修复】AI车出界（压到红白路肩外线）减速惩罚！
-                let currentRoadWidth = 320; 
-                let curveOffset = Math.pow((480 - 350) / 480, 2) * trackCurve * 25; 
-                let currentRoadLeft = (canvas.width - currentRoadWidth) / 2 + curveOffset + 30;
-                let currentRoadRight = currentRoadLeft + currentRoadWidth - 60;
-
-                if (ai.x < currentRoadLeft || ai.x > currentRoadRight - carW) {
-                    ai.speed = Math.max(2, ai.speed - 0.4); // AI出界剧烈减速！
+                // AI 压草地同样会减速
+                if (ai.x < 40 || ai.x > canvas.width - carW - 40) {
+                    ai.speed = Math.max(4, ai.speed - 0.5);
                 }
             });
 
-            // 【修改1】障碍数量减少 40%（生成率从 0.015 缩减至 0.009）
-            if (gameRunning && Math.random() < 0.009 && obstacles.length < 3) {
-                let laneX = 70 + Math.random() * (canvas.width - 180);
-                obstacles.push({ x: laneX, y: -40, w: 26, h: 26 });
+            // 障碍刷新减少
+            if (gameRunning && Math.random() < 0.008 && obstacles.length < 2) {
+                let laneX = 80 + Math.random() * (canvas.width - 200);
+                obstacles.push({ x: laneX, y: -40, w: 28, h: 28 });
             }
 
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 obstacles[i].y += player.speed;
-                obstacles[i].x -= trackCurve * (player.speed / player.maxSpeed) * 0.45;
+                obstacles[i].x -= trackCurve * (player.speed / player.maxSpeed) * 0.55;
 
-                // 【修改3修复】AI撞到路面障碍物（故障箱）碰撞检测
+                // AI 撞击障碍检测
                 aiCars.forEach(ai => {
                     let aiRelativeY = player.y - (ai.distance - player.distance);
                     if (aiRelativeY > -carH && aiRelativeY < canvas.height) {
                         if (ai.x < obstacles[i].x + obstacles[i].w && ai.x + carW > obstacles[i].x &&
                             aiRelativeY < obstacles[i].y + obstacles[i].h && aiRelativeY + carH > obstacles[i].y) {
-                            ai.speed = 1.5; // 对手被路障撞停！
+                            ai.speed = 3; 
                             obstacles.splice(i, 1);
                         }
                     }
@@ -255,256 +244,214 @@
         }
 
         function checkCollisions() {
-            // 1. 玩家出外线惩罚
-            if (player.x < 35 || player.x > canvas.width - carW - 35) {
-                player.speed = Math.max(1.5, player.speed - 0.6); 
-                tipElement.innerText = "⚠️ 兰博基尼失控出界！草地摩擦严重减速！";
+            if (player.x < 40 || player.x > canvas.width - carW - 40) {
+                player.speed = Math.max(1.5, player.speed - 0.8); 
+                tipElement.innerText = "⚠️ 冲出赛道！速度骤降！";
             }
 
-            // 2. 玩家撞击障碍物
             obstacles.forEach((obs, idx) => {
                 if (player.x < obs.x + obs.w && player.x + carW > obs.x &&
                     player.y < obs.y + obs.h && player.y + carH > obs.y) {
                     player.speed = 1; 
                     obstacles.splice(idx, 1);
-                    tipElement.innerText = "💥 严重车祸！正面撞击路障！";
+                    tipElement.innerText = "💥 遭遇撞击！路障损毁！";
                 }
             });
 
-            // 3. 车与车相互擦碰
             aiCars.forEach(ai => {
                 let relativeY = player.y - (ai.distance - player.distance);
                 if (relativeY > -carH && relativeY < canvas.height) {
                     if (player.x < ai.x + carW && player.x + carW > ai.x &&
                         player.y < relativeY + carH && player.y + carH > relativeY) {
-                        player.speed = Math.max(2, player.speed - 4);
-                        ai.speed = Math.max(2, ai.speed - 4); // 擦碰互相减速
-                        tipElement.innerText = `💥 与 ${ai.name} 发生剧烈并线擦碰！`;
+                        player.speed = Math.max(3, player.speed - 5);
+                        ai.speed = Math.max(3, ai.speed - 5);
+                        tipElement.innerText = `💥 激烈交火！与 ${ai.name} 发生碰撞！`;
                     }
                 }
             });
         }
 
         function checkRaceStatus() {
-            if (player.distance >= TRACK_LENGTH) {
-                endRace("🎉 超凡车技！你的兰博基尼在这场4万米极限对决中率先冲线，勇夺冠军！");
-            } else {
+            if (player.distance >= TRACK_LENGTH) endRace("🎉 VICTORY! 你的兰博基尼赢得了世纪对决！");
+            else {
                 let winner = aiCars.find(ai => ai.distance >= TRACK_LENGTH);
-                if (winner) {
-                    endRace(`😭 终点遗憾！${winner.name} 夺走了最高荣耀！`);
-                }
+                if (winner) endRace(`😭 DEFEAT! ${winner.name} 夺走了冠军！`);
             }
         }
 
         function endRace(msg) {
             clearInterval(gameInterval);
             gameRunning = false;
-            tipElement.innerText = msg + " 按Enter键重开决战！";
+            tipElement.innerText = msg + " 按 Enter 重赛";
             alert(msg);
         }
 
         function drawScene() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 背景赛道环境
-            ctx.fillStyle = "#0c0d14";
+            // 赛博朋克夜间赛道背景
+            ctx.fillStyle = "#090a10";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 逐层绘制横向切片透视赛道
+            // 炫酷伪3D赛道渲染
             for (let i = 0; i < canvas.height; i += 4) {
                 let perspectiveFactor = (canvas.height - i) / canvas.height;
-                let curveOffset = Math.pow(perspectiveFactor, 2) * trackCurve * 25;
+                let curveOffset = Math.pow(perspectiveFactor, 2) * trackCurve * 28;
                 
-                let roadWidth = 320 - (perspectiveFactor * 60); 
+                let roadWidth = 340 - (perspectiveFactor * 80); 
                 let roadX = (canvas.width - roadWidth) / 2 + curveOffset;
 
-                // 绘制路肩
-                ctx.fillStyle = ((Math.floor((i - bgOffset) / 20)) % 2 === 0) ? "#e74c3c" : "#fff";
-                ctx.fillRect(roadX - 15, i, 15, 4);
-                ctx.fillRect(roadX + roadWidth, i, 15, 4);
+                // 电子霓虹路肩
+                ctx.fillStyle = ((Math.floor((i - bgOffset) / 25)) % 2 === 0) ? "#00ffcc" : "#ff0055";
+                ctx.fillRect(roadX - 12, i, 12, 4);
+                ctx.fillRect(roadX + roadWidth, i, 12, 4);
 
                 // 赛道马路
-                ctx.fillStyle = "#2c3e50";
+                ctx.fillStyle = "#1e1e2f";
                 ctx.fillRect(roadX, i, roadWidth, 4);
-
-                // 分道虚线
-                if (((Math.floor((i - bgOffset) / 30)) % 2 === 0)) {
-                    ctx.fillStyle = "rgba(255,255,255,0.4)";
-                    ctx.fillRect(roadX + roadWidth/3, i, 3, 4);
-                    ctx.fillRect(roadX + (roadWidth/3)*2, i, 3, 4);
-                }
             }
 
             // 终点线
             let finishLineY = player.y - (TRACK_LENGTH - player.distance);
             if (finishLineY > -100 && finishLineY < canvas.height) {
                 ctx.fillStyle = "#fff";
-                ctx.fillRect(30, finishLineY, canvas.width - 60, 20);
+                ctx.fillRect(40, finishLineY, canvas.width - 80, 25);
             }
 
-            // 绘制障碍
+            // 故障路障
             obstacles.forEach(obs => {
                 if (obs.y > -20 && obs.y < canvas.height) {
-                    ctx.fillStyle = "#ff9f43"; 
+                    ctx.fillStyle = "#ff9f43";
                     ctx.beginPath();
                     ctx.moveTo(obs.x + obs.w/2, obs.y);
                     ctx.lineTo(obs.x, obs.y + obs.h);
                     ctx.lineTo(obs.x + obs.w, obs.y + obs.h);
-                    ctx.closePath();
                     ctx.fill();
-                    ctx.fillStyle = (Math.floor(bgOffset / 8) % 2 === 0) ? "#fff" : "#ff0000";
-                    ctx.fillRect(obs.x + obs.w/2 - 2, obs.y + obs.h/2, 4, 6);
                 }
             });
 
-            // 绘制AI超跑
+            // 绘制AI
             aiCars.forEach(ai => {
                 let relativeY = player.y - (ai.distance - player.distance);
                 if (relativeY > -100 && relativeY < canvas.height + 100) {
-                    drawSuperCar(ai.x, relativeY, ai.color, ai.speed > 11, ai.type);
+                    drawModernCar(ai.x, relativeY, ai.color, ai.speed > 12, ai.type);
                 }
             });
 
-            // 绘制玩家超跑：兰博基尼
-            drawSuperCar(player.x, player.y, player.color, keys.ArrowUp && player.speed > 4, player.type);
+            // 绘制主控：兰博基尼
+            drawModernCar(player.x, player.y, player.color, keys.ArrowUp && player.speed > 3, player.type);
         }
 
-        // 【修改2】顶级炫酷超跑特制渲染器
-        function drawSuperCar(x, y, mainColor, isBoosting, type) {
-            // 车身影阴影
-            ctx.fillStyle = "rgba(0,0,0,0.4)";
-            ctx.fillRect(x + 5, y + 6, carW, carH);
+        // 🏎️ 重构核心：高渐变现代质感超跑绘制
+        function drawModernCar(x, y, mainColor, isBoosting, type) {
+            // 真实阴影投射
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(x + 4, y + 8, carW - 8, carH);
 
             if (type === "lamborghini") {
-                // 1. 兰博基尼：极具侵略性的楔形扁平车身 + 战机双尾翼
-                ctx.fillStyle = "#111"; // 碳纤维大尾翼
-                ctx.fillRect(x - 6, y + carH - 12, carW + 12, 6);
-                ctx.fillRect(x - 6, y + carH - 18, 5, 6);
-                ctx.fillRect(x + carW - 1, y + carH - 18, 5, 6);
+                // 兰博基尼：极具张力的楔形宽体 + 贯穿式极光绿扩散器
+                let grad = ctx.createLinearGradient(x, y, x + carW, y);
+                grad.addColorStop(0, "#00b894");
+                grad.addColorStop(0.5, mainColor);
+                grad.addColorStop(1, "#00b894");
 
-                ctx.fillStyle = mainColor; // 荧光绿外壳
-                ctx.fillRect(x, y + 14, carW, carH - 26);
-                
-                // 标志性锋利箭头车头
+                ctx.fillStyle = grad;
+                ctx.fillRect(x + 2, y + 15, carW - 4, carH - 25);
+
+                // 锐利车头
                 ctx.beginPath();
-                ctx.moveTo(x, y + 14); ctx.lineTo(x + carW / 2, y); ctx.lineTo(x + carW, y + 14);
+                ctx.moveTo(x + 2, y + 15);
+                ctx.lineTo(x + carW/2, y);
+                ctx.lineTo(x + carW - 2, y + 15);
                 ctx.fill();
 
-                // 炫黑轮毂
-                ctx.fillStyle = "#111";
-                ctx.fillRect(x - 5, y + 15, 5, 15); ctx.fillRect(x + carW, y + 15, 5, 15);
-                ctx.fillRect(x - 5, y + 54, 5, 16); ctx.fillRect(x + carW, y + 54, 5, 16);
-
-                // Y字形战斗机前大灯
-                ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(x+6, y+10); ctx.lineTo(x+12, y+5); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x+carW-6, y+10); ctx.lineTo(x+carW-12, y+5); ctx.stroke();
+                // 标志性碳纤维双层悬浮尾翼
+                ctx.fillStyle = "#111216";
+                ctx.fillRect(x - 4, y + carH - 10, carW + 8, 6);
+                ctx.fillRect(x - 6, y + carH - 16, 4, 12);
+                ctx.fillRect(x + carW, y + carH - 16, 4, 12);
 
             } else if (type === "ferrari") {
-                // 2. 法拉利：流线圆润肌肉感 + 一体化大流线尾翼
-                ctx.fillStyle = "#222"; 
-                ctx.fillRect(x + 2, y + carH - 8, carW - 4, 6);
+                // 法拉利：经典饱满的流线型可乐瓶车身
+                let grad = ctx.createLinearGradient(x, y, x + carW, y);
+                grad.addColorStop(0, "#b3002d");
+                grad.addColorStop(0.5, mainColor);
+                grad.addColorStop(1, "#b3002d");
 
-                ctx.fillStyle = mainColor; // 法拉利红
-                ctx.fillRect(x + 2, y + 12, carW - 4, carH - 24);
+                ctx.fillStyle = grad;
+                ctx.fillRect(x + 4, y + 12, carW - 8, carH - 22);
 
                 ctx.beginPath();
-                ctx.arc(x + carW/2, y + 14, carW/2 - 2, Math.PI, 0);
+                ctx.arc(x + carW/2, y + 14, carW/2 - 4, Math.PI, 0);
                 ctx.fill();
 
-                // 侧裙拉花
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(x+2, y + 30, 2, 20); ctx.fillRect(x+carW-4, y + 30, 2, 20);
+                // 一体式鸭尾
+                ctx.fillStyle = "#222";
+                ctx.fillRect(x + 2, y + carH - 8, carW - 4, 4);
 
             } else if (type === "pagani") {
-                // 3. 帕加尼：水滴形碳纤维座舱 + 核心中置标志性四出排气管
-                ctx.fillStyle = "#555"; // 银灰钛合金
-                ctx.fillRect(x, y + 12, carW, carH - 24);
+                // 帕加尼：水滴形低阻舱体 + 中置四出排气管
+                ctx.fillStyle = "#2f3640";
+                ctx.fillRect(x + 5, y + 15, carW - 10, carH - 25);
 
-                // 标志性中置四出排气管
+                // 标志性中心四出排气
                 ctx.fillStyle = "#fff";
-                ctx.fillRect(x + carW/2 - 4, y + carH - 6, 3, 5);
-                ctx.fillRect(x + carW/2 + 1, y + carH - 6, 3, 5);
+                ctx.fillRect(x + carW/2 - 3, y + carH - 4, 6, 4);
 
-                // 独立分体式后悬浮尾翼
+                // 炫黑侧包围
                 ctx.fillStyle = "#111";
-                ctx.fillRect(x - 2, y + carH - 14, 12, 5);
-                ctx.fillRect(x + carW - 10, y + carH - 14, 12, 5);
+                ctx.fillRect(x + 2, y + 20, 3, 40);
+                ctx.fillRect(x + carW - 5, y + 20, 3, 40);
             }
 
-            // 公用座舱全景前挡风
-            ctx.fillStyle = "#111";
-            ctx.fillRect(x + 8, y + 26, carW - 16, 12);
-            ctx.fillStyle = "#00d2d3"; // 镭射蓝窗心
-            ctx.fillRect(x + 10, y + 28, carW - 20, 8);
+            // 赛车玻璃舱（全景熏黑玻璃顶）
+            ctx.fillStyle = "rgba(15, 15, 25, 0.9)";
+            ctx.fillRect(x + 10, y + 26, carW - 20, 14);
+            ctx.fillStyle = "#00d2d3"; // 迎光面
+            ctx.fillRect(x + 12, y + 28, carW - 24, 4);
 
-            // 酷炫氮气喷火特效
+            // 超级氮气喷火加速
             if (isBoosting) {
-                let flameLen = 18 + Math.random() * 25;
-                ctx.fillStyle = "#ff3838";
-                ctx.fillRect(x + 6, y + carH, 6, flameLen);
-                ctx.fillRect(x + carW - 12, y + carH, 6, flameLen);
-                ctx.fillStyle = "#fff200";
-                ctx.fillRect(x + 8, y + carH, 2, flameLen * 0.6);
-                ctx.fillRect(x + carW - 10, y + carH, 2, flameLen * 0.6);
+                let len = 20 + Math.random() * 20;
+                let flameGrad = ctx.createLinearGradient(x, y + carH, x, y + carH + len);
+                flameGrad.addColorStop(0, "#00ffcc");
+                flameGrad.addColorStop(0.5, "#00a8ff");
+                flameGrad.addColorStop(1, "transparent");
+                ctx.fillStyle = flameGrad;
+                ctx.fillRect(x + 8, y + carH, 8, len);
+                ctx.fillRect(x + carW - 16, y + carH, 8, len);
             }
         }
 
         function setupProgressIndicators() {
             progressBar.querySelectorAll('.player-indicator, .ai-indicator').forEach(el => el.remove());
-            
-            let pDot = document.createElement("div");
-            pDot.className = "player-indicator";
-            pDot.id = "p-dot";
-            progressBar.appendChild(pDot);
-
+            let pDot = document.createElement("div"); pDot.className = "player-indicator"; pDot.id = "p-dot"; progressBar.appendChild(pDot);
             aiCars.forEach(ai => {
-                let aDot = document.createElement("div");
-                aDot.className = "ai-indicator";
-                aDot.id = `ai-dot-${ai.id}`;
-                aDot.style.background = ai.color;
-                progressBar.appendChild(aDot);
+                let aDot = document.createElement("div"); aDot.className = "ai-indicator"; aDot.id = `ai-dot-${ai.id}`; aDot.style.background = ai.color; progressBar.appendChild(aDot);
             });
         }
 
         function updateProgress() {
             let totalH = 440; 
-            
-            let pPercent = player.distance / TRACK_LENGTH;
-            if(pPercent > 1) pPercent = 1;
+            let pPercent = player.distance / TRACK_LENGTH; if(pPercent > 1) pPercent = 1;
             document.getElementById("p-dot").style.bottom = (pPercent * totalH) + "px";
-
             aiCars.forEach(ai => {
-                let aiPercent = ai.distance / TRACK_LENGTH;
-                if(aiPercent > 1) aiPercent = 1;
+                let aiPercent = ai.distance / TRACK_LENGTH; if(aiPercent > 1) aiPercent = 1;
                 document.getElementById(`ai-dot-${ai.id}`).style.bottom = (aiPercent * totalH) + "px";
             });
         }
 
         function resetGame() {
             clearInterval(gameInterval);
-            player.distance = 0;
-            player.speed = 0;
-            player.x = 177;
-            obstacles = [];
-            trackCurve = 0;
-            
+            player.distance = 0; player.speed = 0; player.x = 193; obstacles = []; trackCurve = 0;
             aiCars = [
-                { id: 1, type: "ferrari", name: "法拉利 LaFerrari", x: 70, distance: 0, speed: 0, maxSpeed: 16.2 + Math.random() * 0.6, color: "#e74c3c" },
-                { id: 2, type: "pagani", name: "帕加尼 Huayra", x: 280, distance: 0, speed: 0, maxSpeed: 16.5 + Math.random() * 0.6, color: "#95a5a6" }
+                { id: 1, type: "ferrari", name: "法拉利 LaFerrari", x: 80, distance: 10, speed: 0, maxSpeed: 21.0 + Math.random() * 1.5, color: "#ff003c" },
+                { id: 2, type: "pagani", name: "帕加尼 Huayra", x: 280, distance: 10, speed: 0, maxSpeed: 21.5 + Math.random() * 1.5, color: "#a4b0be" }
             ];
-            
-            bgOffset = 0;
-            gameRunning = false;
-            startGame();
-            canvas.focus();
+            bgOffset = 0; gameRunning = false; startGame(); canvas.focus();
         }
 
-        window.onload = function() {
-            window.focus();
-            canvas.focus();
-            drawScene();
-        };
+        window.onload = function() { window.focus(); canvas.focus(); drawScene(); };
     </script>
 </body>
 </html>
