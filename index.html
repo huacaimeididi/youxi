@@ -3,173 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON ARCADE - 我的电竞游戏厅</title>
+    <title>极限超跑对决：暗黑近弯版</title>
     <style>
-        :root {
-            --primary: #00ffcc;
-            --accent-snake: #2ecc71;
-            --accent-car: #ff0055;
-            --accent-plane: #3498db;
-        }
-
         body {
-            background: radial-gradient(circle at center, #111424 0%, #050608 100%);
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow-x: hidden;
+            background-color: #030305; color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; overflow: hidden;
         }
-
-        /* 霓虹大标题 */
-        h1 {
-            font-size: 42px;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-bottom: 5px;
-            color: var(--primary);
-            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5), 0 0 30px rgba(0, 255, 204, 0.2);
-        }
-
-        .subtitle {
-            color: #636e72;
-            font-size: 16px;
-            margin-bottom: 40px;
-            letter-spacing: 1px;
-        }
-
-        /* 游戏卡片容器 */
-        .game-grid {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 1000px;
-            padding: 20px;
-        }
-
-        /* 基础卡片样式 */
-        .game-card {
-            background: rgba(30, 32, 47, 0.7);
-            border: 2px solid #2d3142;
-            border-radius: 16px;
-            width: 260px;
-            padding: 30px 20px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-decoration: none;
-            color: inherit;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .game-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 4px;
-            background: transparent;
-            transition: all 0.3s;
-        }
-
-        /* 悬浮动效（各自游戏专属颜色发光） */
-        .card-snake:hover {
-            transform: translateY(-12px);
-            border-color: var(--accent-snake);
-            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2), 0 0 15px rgba(46, 204, 113, 0.2);
-        }
-        .card-snake:hover .game-icon { text-shadow: 0 0 15px var(--accent-snake); }
-        .card-snake::before { background: var(--accent-snake); }
-
-        .card-car:hover {
-            transform: translateY(-12px);
-            border-color: var(--accent-car);
-            box-shadow: 0 15px 30px rgba(255, 0, 85, 0.2), 0 0 15px rgba(255, 0, 85, 0.2);
-        }
-        .card-car:hover .game-icon { text-shadow: 0 0 15px var(--accent-car); }
-        .card-car::before { background: var(--accent-car); }
-
-        .card-plane:hover {
-            transform: translateY(-12px);
-            border-color: var(--accent-plane);
-            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.2), 0 0 15px rgba(52, 152, 219, 0.2);
-        }
-        .card-plane:hover .game-icon { text-shadow: 0 0 15px var(--accent-plane); }
-        .card-plane::before { background: var(--accent-plane); }
-
-        /* 卡片内部元素 */
-        .game-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            transition: transform 0.3s;
-            display: inline-block;
-        }
+        h1 { margin: 5px 0; font-size: 24px; color: #e1e2e6; letter-spacing: 2px; font-weight: 600; text-transform: uppercase; }
+        #score-board { font-size: 16px; margin-bottom: 12px; font-weight: 500; color: #a4b0be; letter-spacing: 1px; }
         
-        .game-card:hover .game-icon {
-            transform: scale(1.15) rotate(-5deg);
+        .game-layout { display: flex; align-items: center; gap: 20px; }
+        
+        /* 赛事进度条 */
+        .progress-container {
+            width: 8px; height: 460px; background: #14151a; border-radius: 4px; position: relative; overflow: hidden;
         }
+        .dot { position: absolute; left: 0; width: 8px; height: 8px; border-radius: 50%; transition: bottom 0.05s linear; }
+        #p-dot { background: #00ffcc; box-shadow: 0 0 10px #00ffcc; z-index: 5; }
+        #ai1-dot { background: #ff3838; }
+        #ai2-dot { background: #ffffff; }
 
-        .game-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
+        canvas {
+            background-color: #08090d; border: 2px solid #1c1e24; box-shadow: 0 25px 60px rgba(0,0,0,0.8); outline: none; border-radius: 6px;
         }
-
-        .game-desc {
-            font-size: 14px;
-            color: #b2bec3;
-            line-height: 1.6;
-        }
-
-        .play-btn {
-            margin-top: 20px;
-            display: inline-block;
-            padding: 6px 20px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid #444;
-            transition: all 0.3s;
-        }
-        .card-snake:hover .play-btn { background: var(--accent-snake); color: #111; border-color: var(--accent-snake); box-shadow: 0 0 10px var(--accent-snake); }
-        .card-car:hover .play-btn { background: var(--accent-car); color: #fff; border-color: var(--accent-car); box-shadow: 0 0 10px var(--accent-car); }
-        .card-plane:hover .play-btn { background: var(--accent-plane); color: #fff; border-color: var(--accent-plane); box-shadow: 0 0 10px var(--accent-plane); }
+        .tip-text { margin-top: 12px; font-size: 14px; color: #39ff14; font-weight: 500; letter-spacing: 1px; }
+        .back-btn { margin-top: 15px; color: #333; text-decoration: none; font-size: 13px; transition: color 0.3s; }
+        .back-btn:hover { color: #888; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 Neon Arcade</h1>
-    <div class="subtitle">Personal Web Game Hub | 个人独立游戏空间</div>
-
-    <div class="game-grid">
-        <a href="./tanchishe/" class="game-card card-snake">
-            <div class="game-icon">🐍</div>
-            <div class="game-title">经典贪吃蛇</div>
-            <div class="game-desc">龟速复古模式。键盘回车开始，纯方向键流畅转向。</div>
-            <div class="play-btn">START GAME</div>
-        </a>
-
-        <a href="./saiche/" class="game-card card-car">
-            <div class="game-icon">🏎️</div>
-            <div class="game-title">超跑拉力赛</div>
-            <div class="game-desc">驾驶兰博基尼，在4万米魔鬼变道中决战法拉利与帕加尼！</div>
-            <div class="play-btn">START GAME</div>
-        </a>
-
-        <a href="./feiji/" class="game-card card-plane">
-            <div class="game-icon">✈️</div>
-            <div class="game-title">雷霆战机</div>
-            <div class="game-desc">经典纵版弹幕射击游戏。击碎敌机，迎击终极 Boss！</div>
-            <div class="play-btn">START GAME</div>
-        </a>
+    <h1>LAMBORGHINI HURACÁN: ULTIMATE RUSH</h1>
+    <div id="score-board">SPEED: <span id="speedo">0</span> KM/H  |  DISTANCE: <span id="dist">0</span> / 40000 M</div>
+    
+    <div class="game-layout">
+        <div class="progress-container">
+            <div id="p-dot" class="dot" style="bottom: 0px;"></div>
+            <div id="ai1-dot" class="dot" style="bottom: 0px;"></div>
+            <div id="ai2-dot" class="dot" style="bottom: 0px;"></div>
+        </div>
+        <canvas id="roadCanvas" width="520" height="480" tabindex="1"></canvas>
     </div>
+    
+    <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 启动小牛，开启超写实暗黑拉力赛</div>
+    <a href="../" class="back-btn">← 返回游戏大厅</a>
 
-</body>
-</html>
+    <script>
+        const canvas = document.getElementById("roadCanvas");
+        const ctx = canvas.getContext("2d");
+        const tipElement = document.getElementById("gameTip");
+
+        // 核心参数区
+        const TRACK_LENGTH = 40000;       
+        const PLAYER_MAX_SPEED = 30;      // 兰博基尼极速
+        const AI1_MAX_SPEED = 26.5;       // 法拉利极速
+        const AI2_MAX_SPEED = 27.0;       // 劳斯莱斯极速
+        const OBSTACLE_DENSITY = 190;     // 障碍高频刷新密度
+
+        let pDist = 0, pSpeed = 0, pX = 0; 
+        let ai1Dist = 20, ai1Speed = 0, ai1X = -0.45; 
+        let ai2Dist = 35, ai2Speed = 0, ai2X = 0.45;  
+        
+        let obstacles = [];
+        let trackCurve = 0; 
+        let bgOffset = 0;
+        let gameRunning = false;
+        let gameInterval;
+        let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+
+        // 严格设定45道平滑高级大弯道剧本
+        const curveScenarios = [];
+        for(let i = 1; i <= 45; i++) {
+            curveScenarios.push({ dist: i * 850, target: (i % 2 === 0 ? 1 : -1) * 4.2 });
+        }
+
+        window.addEventListener("keydown", e => {
+            if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) e.preventDefault();
+            if (e.key === "Enter" && !gameRunning) { resetGame(); return; }
+            if (e.key in keys) keys[e.key] = true;
+        });
+        window.addEventListener("keyup", e => { if (e.key in keys) keys[e.key] = false; });
+
+        function resetGame() {
+            clearInterval(gameInterval);
+            pDist = 0; pSpeed = 0; pX = 0;
+            ai1Dist = 20; ai1Speed = 0; ai1X = -0.45;
+            ai2Dist = 35; ai2Speed = 0; ai2X = 0.45;
+            obstacles = []; trackCurve = 0; bgOffset = 0;
+            
+            // 沿线生成拟真障碍盾
+            for(let d = 500; d < TRACK_LENGTH - 400; d += OBSTACLE_DENSITY) {
+                obstacles.push({ distance: d, laneX: (Math.random() * 1.1 - 0.55), hit: false });
+            }
+
+            gameRunning = true;
+            tipElement.innerText = "🏎️ 赛事进行中。保持在极光导向线内，避免全速撞击路障。";
+            canvas.focus();
+            gameInterval = setInterval(update, 20);
+        }
+
+        function update() {
+            // 1. 物理加速与阻力
+            if (keys.ArrowUp) { if (pSpeed < PLAYER_MAX_SPEED) pSpeed += 0.5; } 
+            else if (keys.ArrowDown) { if (pSpeed > 0) pSpeed -= 1.2; } 
+            else { if (pSpeed > 0) pSpeed -= 0.3; }
+            if (pSpeed < 0) pSpeed = 0;
+
+            if (pSpeed > 1) {
+                if (keys.ArrowLeft) pX -= 0.055;
+                if (keys.ArrowRight) pX += 0.055;
+            }
+            pDist += pSpeed;
+            bgOffset += pSpeed;
+
+            // 2. 弯道地平线矩阵位移
+            let scenario = curveScenarios.find(s => pDist < s.dist);
+            let targetCurve = scenario ? scenario.target : 0;
+            trackCurve += (targetCurve - trackCurve) * 0.035; 
+
+            // 弯道倾斜惯性力
+            if (pSpeed > 1) {
+                pX -= trackCurve * (pSpeed / PLAYER_MAX_SPEED) * 0.015;
+            }
+
+            // 【核心修复：防飞出跑道机制】
+            // 限制玩家的最大变道范围在 [-0.8, 0.8] 之间，一旦碰到边缘直接死死卡住并强行回弹，绝不飘出赛道！
+            if (pX < -0.8) { pX = -0.8; pSpeed = Math.max(4, pSpeed - 0.4); }
+            if (pX > 0.8) { pX = -0.8; pX = 0.8; pSpeed = Math.max(4, pSpeed - 0.4); }
+
+            // 3. AI 超跑AI控制
+            if (ai1Dist < TRACK_LENGTH) { ai1Speed += (AI1_MAX_SPEED - ai1Speed) * 0.02; ai1Dist += ai1Speed; }
+            if (ai2Dist < TRACK_LENGTH) { ai2Speed += (AI2_MAX_SPEED - ai2Speed) * 0.02; ai2Dist += ai2Speed; }
+
+            // 对手防卡位跟车
+            if (Math.abs(ai1Dist - pDist) < 350) ai1X += (pX - ai1X) * 0.012;
+            if (Math.abs(ai2Dist - pDist) < 350) ai2X += (pX - ai2X) * 0.012;
+            ai1X = Math.max(-0.75, Math.min(0.75, ai1X));
+            ai2X = Math.max(-0.75, Math.min(0.75, ai2X));
+
+            // 4. 路障碰撞沉浸结算
+            obstacles.forEach(obs => {
+                if (!obs.hit && Math.abs(obs.distance - pDist) < 16 && Math.abs(obs.laneX - pX) < 0.22) {
+                    pSpeed = 3; 
+                    obs.hit = true; 
+                    tipElement.innerText = "⚠️ 警报：正面遭遇激光护盾破损，车速剧降。";
+                }
+                if (!obs.hit && Math.abs(obs.distance - ai1Dist) < 16 && Math.abs(obs.laneX - ai1X) < 0.2) { ai1Speed = 4; obs.hit = true; }
+                if (!obs.hit && Math.abs(obs.distance - ai2Dist) < 16 && Math.abs(obs.laneX - ai2X) < 0.2) { ai2Speed = 4; obs.hit = true; }
+            });
+
+            // 5. 胜负终局
+            if (pDist >= TRACK_LENGTH) { clearInterval(gameInterval); gameRunning = false; alert("🏆 完美控车！你的兰博基尼小牛率先跨越终点线，斩获拉力赛总冠军！"); }
+            if (ai1Dist >= TRACK_LENGTH) { clearInterval(gameInterval); gameRunning = false; alert("😭 赛事结束，法拉利拉法夺得头名。"); }
+            if (ai2Dist >= TRACK_LENGTH) { clearInterval(gameInterval); gameRunning = false; alert("😭 挑战失败，劳斯莱斯古斯特赢得头筹。"); }
+
+            renderWriteStyleEngine();
+        }
+
+        // ==================== 🏎️ 写实流线风格渲染引擎 ====================
+        function renderWriteStyleEngine() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 暗黑赛事底色
+            ctx.fillStyle = "#06070b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let horizon = 150; 
+            
+            // 逐层渲染高级透视弯道马路
+            for (let y = horizon; y < canvas.height; y += 4) {
+                let percent = (y - horizon) / (canvas.height - horizon);
+                let curveOffset = Math.pow(percent, 2.5) * trackCurve * 115;
+                
+                let roadWidth = 60 + percent * 350; 
+                let roadX = canvas.width / 2 + curveOffset;
+
+                // 【高级去幼稚化】改用高级的暗光流线红白窄边，不刺眼、更写实
+                ctx.fillStyle = (Math.floor((y - bgOffset * 0.5) / 20) % 2 === 0) ? "#1c1e24" : "#2f3542";
+                ctx.fillRect(roadX - roadWidth/2 - 8, y, 8, 4);
+                ctx.fillRect(roadX + roadWidth/2, y, 8, 4);
+
+                // 赛道马路采用碳纤维深灰沥青色
+                ctx.fillStyle = "#16171d"; ctx.fillRect(roadX - roadWidth/2, y, roadWidth, 4);
+
+                // 【关键：极光霓虹路中导向线】取代刺眼的白线
+                if (Math.floor((y - bgOffset * 0.5) / 30) % 2 === 0) {
+                    ctx.fillStyle = "rgba(0, 255, 204, 0.35)";
+                    ctx.fillRect(roadX - 1, y, 2, 4);
+                }
+            }
+
+            // 渲染整齐对齐的科技光栅路障
+            obstacles.forEach(obs => {
+                let relDist = obs.distance - pDist;
+                if (!obs.hit && relDist > 0 && relDist < 750) {
+                    let percent = 1 - (relDist / 750);
+                    let y = horizon + percent * (canvas.height - horizon);
+                    
+                    let curveOffset = Math.pow((y - horizon) / (canvas.height - horizon), 2.5) * trackCurve * 115;
+                    let roadWidth = 60 + ((y - horizon) / (canvas.height - horizon)) * 350;
+                    
+                    let obsX = canvas.width / 2 + curveOffset + obs.laneX * roadWidth;
+                    let w = 6 + percent * 26;
+                    let h = 4 + percent * 18;
+
+                    if (y > horizon && y < canvas.height) {
+                        // 半透明写实光束路障防护板
+                        ctx.fillStyle = "rgba(255, 0, 102, 0.75)";
+                        ctx.fillRect(obsX - w/2, y - h, w, h);
+                        ctx.fillStyle = "#fff";
+                        ctx.fillRect(obsX - w/2, y - h, w, 2); // 顶部发光条
+                    }
+                }
+            });
+
+            // 渲染法拉利拉法与劳斯莱斯古斯特的高清写实轮廓比例
+            [ai1Dist, ai2Dist].forEach((aiDist, index) => {
+                let relDist = aiDist - pDist;
+                if (relDist > -100 && relDist < 750) {
+                    let percent = 1 - (relDist / 750);
+                    let y = horizon + percent * (canvas.height - horizon);
+                    
+                    let curveOffset = Math.pow((y - horizon) / (canvas.height - horizon), 2.5) * trackCurve * 115;
+                    let roadWidth = 60 + ((y - horizon) / (canvas.height - horizon)) * 350;
+                    
+                    let laneX = (index === 0) ? ai1X : ai2X;
+                    let carX = canvas.width / 2 + curveOffset + laneX * roadWidth;
+                    let scale = 0.25 + percent * 1.15;
+
+                    if (y > horizon && y < canvas.height) {
+                        if (index === 0) drawFerrariLaFrance(carX, y, scale);
+                        else drawRollsGhost(carX, y, scale);
+                    }
+                }
+            });
+
+            // 渲染主控：兰博基尼小牛 (Huracán)——比例完全重塑
+            drawLamborghiniHuracan(canvas.width / 2 + pX * 350, 442, 1.4, keys.ArrowUp && pSpeed > 4);
+
+            // 刷新面板数据
+            document.getElementById("
