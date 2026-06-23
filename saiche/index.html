@@ -3,28 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D NEON RUSH - 终极超跑决战</title>
+    <title>3D NEON RUSH - 最终完美版</title>
     <style>
         body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #030308;
-            font-family: 'Segoe UI', sans-serif;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            margin: 0; overflow: hidden; background-color: #020205;
+            font-family: 'Segoe UI', sans-serif; color: #fff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;
         }
         #ui-layer {
-            position: absolute;
-            top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: none;
-            z-index: 10;
+            position: absolute; top: 20px; display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 10;
         }
         h1 { margin: 0; font-size: 26px; color: #00ffcc; text-shadow: 0 0 15px #00ffcc; text-transform: uppercase; letter-spacing: 3px;}
         #score-board { font-size: 18px; margin: 5px 0; color: #fff; font-weight: bold; }
@@ -32,34 +19,16 @@
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         
         #progress-box {
-            position: absolute;
-            left: 30px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 22px;
-            height: 380px;
-            background: rgba(255,255,255,0.05);
-            border: 2px solid #444;
-            border-radius: 11px;
-            z-index: 10;
+            position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 380px; background: rgba(255,255,255,0.05); border: 2px solid #444; border-radius: 11px; z-index: 10;
         }
-        .dot {
-            position: absolute;
-            left: 4px; width: 14px; height: 14px;
-            border-radius: 50%; border: 2px solid #fff;
-            transition: bottom 0.05s linear;
-        }
+        .dot { position: absolute; left: 4px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; transition: bottom 0.05s linear; }
         #p-dot { background: #00ffcc; box-shadow: 0 0 10px #00ffcc; z-index: 5; }
         #ai1-dot { background: #ff0055; }
         #ai2-dot { background: #ffca28; }
         
         #canvas-container {
-            width: 640px;
-            height: 480px;
-            border: 3px solid #00ffcc;
-            box-shadow: 0 0 40px rgba(0,255,204,0.3);
-            position: relative;
-            background: #000;
+            width: 720px; height: 480px; border: 3px solid #00ffcc; box-shadow: 0 0 40px rgba(0,255,204,0.4); position: relative; background: #000;
         }
         .back-btn { position: absolute; bottom: 20px; color: #444; text-decoration: none; font-size: 13px; z-index: 10; }
         .back-btn:hover { color: #fff; }
@@ -70,9 +39,9 @@
 <body>
 
     <div id="ui-layer">
-        <h1>🏎️ 3D NEON RUSH: 45重弯道魔鬼拉力</h1>
-        <div id="score-board">时速: <span id="speedo">0</span> km/h | 进度: <span id="dist">0</span> / 40000m</div>
-        <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 唤醒机甲兰博基尼，迎战魔鬼连弯！</div>
+        <h1>🏎️ 3D NEON RUSH: FINAL EDITION</h1>
+        <div id="score-board">时速: <span id="speedo">0</span> km/h | 赛事进度: <span id="dist">0</span> / 40000m</div>
+        <div class="tip-text" id="gameTip">⌨️ 按回车键 (Enter) 弹射起步！享受最终极致超跑视听！</div>
     </div>
 
     <div id="progress-box">
@@ -82,7 +51,7 @@
     </div>
 
     <div id="canvas-container">
-        <div id="loading-text">🚀 正在启动 3D 超级跑车渲染引擎...</div>
+        <div id="loading-text">🚀 正在注入终极 3D 全景超跑引擎...</div>
     </div>
     
     <a href="../" class="back-btn">← 返回游戏大厅</a>
@@ -92,330 +61,290 @@
         const container = document.getElementById('canvas-container');
         
         let scene, camera, renderer, use3D = true;
-        let ctx2d, canvas2d; 
-        
         let playerCar, ai1Car, ai2Car;
-        let pDist = 0, pSpeed = 0, pX = 0;
-        let ai1Dist = 10, ai1Speed = 0, ai1X = -12;
-        let ai2Dist = 15, ai2Speed = 0, ai2X = 12;
+        let pDist = 0, pSpeed = 0, pX = 0; 
+        let ai1Dist = 10, ai1Speed = 0, ai1X = -8;
+        let ai2Dist = 15, ai2Speed = 0, ai2X = 8;
         
         let obstacles = [];
-        let neonPoles = [];
+        let roadSegments = [];
         let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
         let gameRunning = false;
         let particles = [];
 
-        // 动态弯道算法控制
-        let currentTrackCurve = 0;
-        let targetTrackCurve = 0;
-
-        // 【大升级】严密手写 45 道魔鬼大弯道剧本
-        const curveScenarios = [];
-        for (let i = 1; i <= 45; i++) {
-            // 每隔 800 米产生一个新弯道，方向随机，越往后弯道越急（最大达到8）
-            let direction = (i % 2 === 0) ? 1 : -1;
-            let intensity = 3 + Math.min(5, Math.floor(i / 9)); 
-            curveScenarios.push({
-                dist: i * 880,
-                target: direction * intensity
-            });
+        // 45重魔鬼大弯道几何公式剧本
+        function getTrackCurveAt(zPos) {
+            let absZ = Math.abs(zPos);
+            if (absZ < 1000) return 0;
+            // 通过正弦与周期函数，每过800米自动生成一套连续空间大扭曲
+            let segment = Math.floor(absZ / 850);
+            if (segment > 45) return 0;
+            let intensity = 1.2 + (segment * 0.05); // 越往后甩尾越猛
+            return Math.sin(absZ * 0.0015) * intensity;
         }
 
         window.addEventListener('load', function() {
             document.getElementById('loading-text').style.display = 'none';
-            if (typeof THREE === 'undefined') {
-                use3D = false; init2DFallback(); return;
-            }
-            try { init3DEngine(); } catch (e) { use3D = false; init2DFallback(); }
+            if (typeof THREE === 'undefined') { alert("3D库加载失败，请刷新重试！"); return; }
+            initUltimate3D();
         });
 
-        // ==================== 3D 引擎与炫酷机甲模型 ====================
-        function init3DEngine() {
+        function initUltimate3D() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x030308, 0.006);
+            scene.fog = new THREE.FogExp2(0x020205, 0.004);
 
-            camera = new THREE.PerspectiveCamera(60, 640 / 480, 0.1, 1000);
-            camera.position.set(0, 6.5, 14);
-            camera.lookAt(0, 2.5, -10);
+            camera = new THREE.PerspectiveCamera(60, 720 / 480, 0.2, 1000);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(640, 480);
-            renderer.setClearColor(0x030308, 1);
+            renderer.setSize(720, 480);
+            renderer.setClearColor(0x020205, 1);
             container.appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambientLight);
-            
-            // 炫酷蓝色侧边聚光
-            const sideLight = new THREE.PointLight(0x00ffff, 1.5, 100);
-            sideLight.position.set(0, 10, 0);
-            scene.add(sideLight);
+            // 高阶环境光
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const light = new THREE.DirectionalLight(0x00ffcc, 1.0);
+            light.position.set(0, 30, 20);
+            scene.add(light);
 
-            // 3D 宽阔大马路
-            const roadGeo = new THREE.PlaneGeometry(46, 2000);
-            const roadMat = new THREE.MeshStandardMaterial({ color: "#111218", roughness: 0.5 });
-            const road = new THREE.Mesh(roadGeo, roadMat);
-            road.rotation.x = -Math.PI / 2;
-            road.position.z = -800;
-            scene.add(road);
+            // 立体跑道生成（每隔15米一段，动态拼装全线紧密咬合弯道）
+            for (let z = 0; z > -1500; z -= 15) {
+                createRoadSegment(z);
+            }
 
-            createTrackLine(-23); createTrackLine(23);
+            // 创建三架极具立体肌肉拉花的赛车
+            playerCar = createSuperMachine("#00ffcc", true); scene.add(playerCar);
+            ai1Car = createSuperMachine("#ff0055", false); scene.add(ai1Car);
+            ai2Car = createSuperMachine("#ffca28", false); scene.add(ai2Car);
 
-            // 拼装终极炫酷机甲兰博基尼
-            playerCar = createUltimate3DCar("#00ffcc", true); scene.add(playerCar);
-            ai1Car = createUltimate3DCar("#ff0055", false); scene.add(ai1Car);
-            ai2Car = createUltimate3DCar("#ffca28", false); scene.add(ai2Car);
-
-            for(let i = 0; i < 45; i++) spawnNeonPole(i * -25);
-
+            // 初始摄像机锁定
+            updateCameraAndPositions();
             renderer.render(scene, camera);
         }
 
-        // 【超级进化】拼装极其立体的机甲超跑
-        function createUltimate3DCar(colorHex, isPlayer) {
-            const carGroup = new THREE.Group();
+        // 创建无缝咬合的动态空间弯道切片
+        function createRoadSegment(zPos) {
+            const segGroup = new THREE.Group();
+            let curve = getTrackCurveAt(zPos);
+            let xOffset = curve * 45; // 核心道路中心点坐标
 
-            // 1. 底盘大包围
-            const baseGeo = new THREE.BoxGeometry(3.8, 0.4, 7.2);
-            const baseMat = new THREE.MeshStandardMaterial({ color: "#0b0c10", roughness: 0.5 });
-            const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-            baseMesh.position.y = 0.3;
-            carGroup.add(baseMesh);
+            // 柏油主路
+            const roadGeo = new THREE.PlaneGeometry(44, 16);
+            const roadMat = new THREE.MeshStandardMaterial({ color: "#13141f", roughness: 0.6 });
+            const roadMesh = new THREE.Mesh(roadGeo, roadMat);
+            roadMesh.rotation.x = -Math.PI / 2;
+            segGroup.add(roadMesh);
 
-            // 2. 肌肉变道车身（多段切割组合）
-            const bodyGeo = new THREE.BoxGeometry(3.6, 0.7, 4.5);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.15, metalness: 0.3 });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.set(0, 0.7, 0.5);
-            carGroup.add(body);
+            // 两侧电子发光霓虹路肩边线
+            const sideGeo = new THREE.BoxGeometry(1.2, 0.3, 16);
+            const sideMatL = new THREE.MeshBasicMaterial({ color: (Math.abs(zPos)/16)%2===0 ? "#00ffcc" : "#111" });
+            const sideMatR = new THREE.MeshBasicMaterial({ color: (Math.abs(zPos)/16)%2===0 ? "#ff0055" : "#111" });
+            
+            const lSide = new THREE.Mesh(sideGeo, sideMatL); lSide.position.set(-22, 0.15, 0); segGroup.add(lSide);
+            const rSide = new THREE.Mesh(sideGeo, sideMatR); rSide.position.set(22, 0.15, 0); segGroup.add(rSide);
 
-            // 3. F1 尖锐下压车头（极具立体进攻型）
-            const noseGeo = new THREE.BoxGeometry(3.0, 0.4, 2.5);
-            const nose = new THREE.Mesh(noseGeo, bodyMat);
-            nose.position.set(0, 0.5, -2.6);
-            nose.rotation.x = 0.12; // 俯冲切角
-            carGroup.add(nose);
+            // 左右两侧高大霓虹灯柱（100%跟随道路曲线！）
+            if (Math.abs(zPos) % 45 === 0) {
+                const poleGeo = new THREE.CylinderGeometry(0.2, 0.2, 16, 6);
+                const poleMat = new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? "#00ffcc" : "#ff0055" });
+                const lp = new THREE.Mesh(poleGeo, poleMat); lp.position.set(-25, 8, 0); segGroup.add(lp);
+                const rp = new THREE.Mesh(poleGeo, poleMat); rp.position.set(25, 8, 0); segGroup.add(rp);
+            }
 
-            // 4. 水滴熏黑战斗机舱盖
-            const cabinGeo = new THREE.BoxGeometry(2.6, 0.65, 3.2);
-            const cabinMat = new THREE.MeshStandardMaterial({ color: "#090a10", roughness: 0.1 });
-            const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-            cabin.position.set(0, 1.25, 0.2);
-            carGroup.add(cabin);
+            segGroup.position.set(xOffset, 0, zPos);
+            scene.add(segGroup);
+            roadSegments.push(segGroup);
+        }
 
-            // 5. 激光大灯（三维立体灯条）
-            const lightGeo = new THREE.BoxGeometry(0.6, 0.15, 0.2);
-            const lightMat = new THREE.MeshBasicMaterial({ color: isPlayer ? "#00ffff" : "#ffffff" });
-            const lLight = new THREE.Mesh(lightGeo, lightMat); lLight.position.set(-1.2, 0.5, -3.8); carGroup.add(lLight);
-            const rLight = lLight.clone(); rLight.position.x = 1.2; carGroup.add(rLight);
+        // 打造极致立体的超跑机甲模型
+        function createSuperMachine(colorHex, isPlayer) {
+            const car = new THREE.Group();
 
-            // 6. 狂野悬浮大尾翼+宽体支架
-            const spoilerGeo = new THREE.BoxGeometry(4.6, 0.15, 1.0);
-            const spoilerMat = new THREE.MeshStandardMaterial({ color: "#0d0e15" });
-            const spoiler = new THREE.Mesh(spoilerGeo, spoilerMat);
-            spoiler.position.set(0, 1.6, 3.4);
-            carGroup.add(spoiler);
+            // 超宽大底盘包围
+            const base = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.3, 7.4), new THREE.MeshStandardMaterial({ color: "#08090d" }));
+            base.position.y = 0.25; car.add(base);
 
-            const wingLGeo = new THREE.BoxGeometry(0.12, 0.9, 0.8);
-            const wingL = new THREE.Mesh(wingLGeo, spoilerMat); wingL.position.set(-2.1, 1.1, 3.4); carGroup.add(wingL);
-            const wingR = wingL.clone(); wingR.position.x = 2.1; carGroup.add(wingR);
+            // 炫酷肌肉流线前脸罩
+            const body = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.8, 4.6), new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.1, metalness: 0.4 }));
+            body.position.set(0, 0.75, 0.4); car.add(body);
 
-            // 7. 独立宽体大轮毂
-            const wheelGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.6, 16);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: "#111116", roughness: 0.7 });
-            const wheels = [
-                {x: -2.0, z: -2.0}, {x: 2.0, z: -2.0},
-                {x: -2.0, z: 2.4}, {x: 2.0, z: 2.4}
-            ];
-            wheels.forEach(w => {
-                const wheel = new THREE.Mesh(wheelGeo, wheelMat); wheel.rotation.z = Math.PI / 2; wheel.position.set(w.x, 0.6, w.z); carGroup.add(wheel);
+            // F1俯冲切角立体车头
+            const nose = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.4, 2.6), body.material);
+            nose.position.set(0, 0.5, -2.6); nose.rotation.x = 0.15; car.add(nose);
+
+            // 熏黑水滴全景战斗机驾驶舱
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.7, 3.0), new THREE.MeshStandardMaterial({ color: "#07080c", roughness: 0.05 }));
+            cabin.position.set(0, 1.35, 0.2); car.add(cabin);
+
+            // 冰蓝色全LED贯穿大灯
+            const light = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.2), new THREE.MeshBasicMaterial({ color: "#00ffff" }));
+            light.position.set(-1.1, 0.5, -3.8); car.add(light);
+            const rLight = light.clone(); rLight.position.x = 1.1; car.add(rLight);
+
+            // 大型炫黑宽体定风翼
+            const wing = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.12, 1.2), new THREE.MeshStandardMaterial({ color: "#0a0a0f" }));
+            wing.position.set(0, 1.7, 3.4); car.add(wing);
+            const supportL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.8), wing.material); supportL.position.set(-2.2, 1.2, 3.4); car.add(supportL);
+            const supportR = supportL.clone(); supportR.position.x = 2.2; car.add(supportR);
+
+            // 独立运动宽体电镀轮毂
+            const wGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.65, 16);
+            const wMat = new THREE.MeshStandardMaterial({ color: "#111115", roughness: 0.5 });
+            [{x:-2.1, z:-2}, {x:2.1, z:-2}, {x:-2.1, z:2.4}, {x:2.1, z:2.4}].forEach(pos => {
+                const wheel = new THREE.Mesh(wGeo, wMat); wheel.rotation.z = Math.PI / 2; wheel.position.set(pos.x, 0.65, pos.z); car.add(wheel);
             });
 
-            return carGroup;
+            return car;
         }
 
-        function createTrackLine(xPos) {
-            const lineGeo = new THREE.PlaneGeometry(0.6, 2000);
-            const lineMat = new THREE.MeshBasicMaterial({ color: "#2c3e50" });
-            const line = new THREE.Mesh(lineGeo, lineMat); line.rotation.x = -Math.PI / 2; line.position.set(xPos, 0.02, -800); scene.add(line);
-        }
-
-        function spawnNeonPole(zPos) {
-            const poleGeo = new THREE.CylinderGeometry(0.2, 0.2, 14, 6);
-            const poleMat = new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? "#00ffcc" : "#ff0055" });
-            const lPole = new THREE.Mesh(poleGeo, poleMat); lPole.position.set(-25, 7, zPos); scene.add(lPole); neonPoles.push(lPole);
-            const rPole = lPole.clone(); rPole.position.x = 25; scene.add(rPole); neonPoles.push(rPole);
-        }
-
-        // ==================== 共享控制行为 ====================
         window.addEventListener("keydown", e => {
             if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) e.preventDefault();
-            if(e.key === "Enter" && !gameRunning) { gameRunning = true; document.getElementById("gameTip").innerText = "🏎️ 狂飙开始！顺着弯道左右变道！"; loop(); }
+            if(e.key === "Enter" && !gameRunning) { gameRunning = true; document.getElementById("gameTip").innerText = "🏎️ FINAL RUSH! 正在高频迎击发光晶体矩阵！"; animate(); }
             if(e.key in keys) keys[e.key] = true;
         });
         window.addEventListener("keyup", e => { if(e.key in keys) keys[e.key] = false; });
 
-        function loop() {
+        function animate() {
             if (!gameRunning) return;
-            requestAnimationFrame(loop);
+            requestAnimationFrame(animate);
 
-            // 1. 玩家超跑驾驶手感计算
-            if (keys.ArrowUp) { if (pSpeed < 4.2) pSpeed += 0.06; }
-            else if (keys.ArrowDown) { if (pSpeed > 0) pSpeed -= 0.12; }
-            else { if (pSpeed > 0) pSpeed -= 0.025; }
+            // 1. 核心操控与极速推背感物理
+            if (keys.ArrowUp) { if (pSpeed < 4.6) pSpeed += 0.06; }
+            else if (keys.ArrowDown) { if (pSpeed > 0) pSpeed -= 0.15; }
+            else { if (pSpeed > 0) pSpeed -= 0.03; }
             if (pSpeed < 0) pSpeed = 0;
 
             if (pSpeed > 0.1) {
-                if (keys.ArrowLeft && pX > -19) pX -= 0.7;
-                if (keys.ArrowRight && pX < 19) pX += 0.7;
+                if (keys.ArrowLeft && pX > -18) pX -= 0.75;
+                if (keys.ArrowRight && pX < 18) pX += 0.75;
             }
             pDist += pSpeed;
 
-            // 2. 【核心更新】45道魔鬼大弯道逻辑处理与离心力施加
-            let scenario = curveScenarios.find(s => pDist < s.dist);
-            targetTrackCurve = scenario ? scenario.target : 0;
-            currentTrackCurve += (targetTrackCurve - currentTrackCurve) * 0.025;
-
-            // 强制弯道漂移位移影响（速度越快甩得越狠）
-            if (pSpeed > 0.5) {
-                pX -= currentTrackCurve * (pSpeed / 4.2) * 0.55;
-            }
-
-            // 3. AI 竞争对手狂暴提速
-            if(ai1Dist < TRACK_LENGTH) { ai1Speed += (3.7 - ai1Speed) * 0.012; ai1Dist += ai1Speed; }
-            if(ai2Dist < TRACK_LENGTH) { ai2Speed += (3.8 - ai2Speed) * 0.012; ai2Dist += ai2Speed; }
+            // 2. AI 宿敌狂暴提速追踪
+            if(ai1Dist < TRACK_LENGTH) { ai1Speed += (4.1 - ai1Speed) * 0.015; ai1Dist += ai1Speed; }
+            if(ai2Dist < TRACK_LENGTH) { ai2Speed += (4.2 - ai2Speed) * 0.015; ai2Dist += ai2Speed; }
             
-            // AI 弯道离心力拉扯与微调
-            ai1X -= currentTrackCurve * (ai1Speed / 4.2) * 0.55;
-            ai2X -= currentTrackCurve * (ai2Speed / 4.2) * 0.55;
+            // 智能超强变道拦截
+            if (ai1Dist > pDist && ai1Dist - pDist < 180) ai1X += (pX - ai1X) * 0.025;
+            if (ai2Dist > pDist && ai2Dist - pDist < 180) ai2X += (pX - ai2X) * 0.025;
+            if(ai1X < -18) ai1X = -18; if(ai1X > 18) ai1X = 18;
+            if(ai2X < -18) ai2X = -18; if(ai2X > 18) ai2X = 18;
 
-            // 蛇形拦截卡位
-            if (ai1Dist > pDist && ai1Dist - pDist < 160) ai1X += (pX - ai1X) * 0.02;
-            if (ai2Dist > pDist && ai2Dist - pDist < 160) ai2X += (pX - ai2X) * 0.02;
-
-            // 防止出界死亡
-            if(ai1X < -19) ai1X = -19; if(ai1X > 19) ai1X = 19;
-            if(ai2X < -19) ai2X = -19; if(ai2X > 19) ai2X = 19;
-
-            // 4. 【大提升】密集生成发光障碍晶体箱
-            if (Math.random() < 0.016 && obstacles.length < 5) {
-                if (use3D) {
-                    const obsGeo = new THREE.BoxGeometry(3.2, 3.2, 3.2);
-                    const obsMat = new THREE.MeshStandardMaterial({ color: "#ff7f50", emissive: "#551100", roughness: 0.1 });
-                    const obsMesh = new THREE.Mesh(obsGeo, obsMat);
-                    obsMesh.position.set(Math.random() * 34 - 17, 1.6, -600 - pDist);
-                    scene.add(obsMesh); obstacles.push(obsMesh);
-                } else {
-                    obstacles.push({ x: Math.random() * 34 - 17, z: -600 - pDist });
-                }
+            // 3. 【重大改进：障碍物大量高频刷新】
+            if (Math.random() < 0.04 && obstacles.length < 7) { 
+                let spawnZ = -550 - pDist - (Math.random() * 200);
+                let spawnCurve = getTrackCurveAt(spawnZ);
+                const obsGeo = new THREE.BoxGeometry(3.5, 3.5, 3.5);
+                // 亮粉色超级发光路障晶体
+                const obsMat = new THREE.MeshStandardMaterial({ color: "#ff007f", emissive: "#440022", roughness: 0.1 });
+                const obsMesh = new THREE.Mesh(obsGeo, obsMat);
+                obsMesh.position.set(spawnCurve * 45 + (Math.random() * 32 - 16), 1.75, spawnZ);
+                scene.add(obsMesh);
+                obstacles.push(obsMesh);
             }
 
-            // 障碍物位移与撞击摩擦判断
+            // 4. 动态迭代3D空间无限向前拼接
+            roadSegments.forEach(seg => {
+                let relZ = seg.position.z - (-pDist);
+                if (relZ > 100) {
+                    let newZ = seg.position.z - 1500;
+                    let c = getTrackCurveAt(newZ);
+                    seg.position.set(c * 45, 0, newZ);
+                }
+            });
+
+            // 5. 毫秒级高精碰撞判定与火花迸发
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
-                let relZ = use3D ? (obs.position.z - (-pDist)) : (obs.z - (-pDist));
-                let obsX = use3D ? obs.position.x : obs.x;
+                let relZ = obs.position.z - (-pDist);
+                let pWorldX = playerCar.position.x;
                 
-                // 弯道对障碍物产生扭曲拉扯视觉
-                if (use3D) {
-                    obs.position.x -= currentTrackCurve * (pSpeed / 4.2) * 0.55;
-                } else {
-                    obs.x -= currentTrackCurve * (pSpeed / 4.2) * 0.55;
-                }
-
-                if (relZ > -3.8 && relZ < 3.8 && Math.abs(obsX - pX) < 3.5) {
-                    pSpeed = 0.15; // 毁灭性撞停
-                    if (use3D) {
-                        explodeParticles(pX, 1.5, 0); // 炸开火花
-                        scene.remove(obs);
-                    }
+                if (relZ > -3.8 && relZ < 3.8 && Math.abs(obs.position.x - pWorldX) < 3.6) {
+                    pSpeed = 0.15; // 正面撞停惩罚
+                    explodeParticles(pWorldX, 1.5, -pDist); // 炸裂火花
+                    camera.position.y += 1.5; // 镜头撞击震动效果
+                    scene.remove(obs);
                     obstacles.splice(i, 1);
                     continue;
                 }
-                if (relZ > 25) { if(use3D) scene.remove(obs); obstacles.splice(i, 1); }
+                if (relZ > 30) { scene.remove(obs); obstacles.splice(i, 1); }
             }
 
-            // 5. 压外线草地摩擦减速惩罚
-            if (pX < -20 || pX > 20) {
-                pSpeed = Math.max(1.2, pSpeed - 0.1);
+            // 6. 草地摩擦阻力惩罚
+            let pCurrentCurve = getTrackCurveAt(-pDist) * 45;
+            if (pX + pCurrentCurve < pCurrentCurve - 21 || pX + pCurrentCurve > pCurrentCurve + 21) {
+                pSpeed = Math.max(1.0, pSpeed - 0.15);
             }
 
-            // 6. 【炫酷尾焰】多色动态喷火粒子
-            if (keys.ArrowUp && pSpeed > 0.8 && use3D) create机甲Flame();
-            if (use3D) updateParticles();
+            // 7. 三维等离子尾焰与状态刷新
+            if (keys.ArrowUp && pSpeed > 0.5) createEnginePlumes();
+            updateParticles();
+            updateCameraAndPositions();
 
-            // 刷新面板
+            // 刷新面板数值
             document.getElementById("speedo").innerText = Math.floor(pSpeed * 105);
             document.getElementById("dist").innerText = Math.floor(pDist);
             document.getElementById("p-dot").style.bottom = (Math.min(1, pDist/TRACK_LENGTH) * 356) + "px";
             document.getElementById("ai1-dot").style.bottom = (Math.min(1, ai1Dist/TRACK_LENGTH) * 356) + "px";
             document.getElementById("ai2-dot").style.bottom = (Math.min(1, ai2Dist/TRACK_LENGTH) * 356) + "px";
 
-            // 3D/2D 渲染分支调度
-            if (use3D) {
-                // 相机跟随摆动扭曲
-                camera.position.x = pX * 0.65 + currentTrackCurve * 0.8;
-                camera.position.y = 6.5 - (pSpeed * 0.25);
-                camera.rotation.z = -(pX - playerCar.position.x) * 0.04 - (currentTrackCurve * 0.015);
-                
-                playerCar.position.set(pX, 0, 0);
-                playerCar.rotation.y = keys.ArrowLeft ? 0.1 : (keys.ArrowRight ? -0.1 : 0);
+            if (pDist >= TRACK_LENGTH) { gameRunning = false; alert("🏆 VICTORY! 你征服了45重弯道与晶体矩阵，成为终极车神！"); }
+            if (ai1Dist >= TRACK_LENGTH || ai2Dist >= TRACK_LENGTH) { gameRunning = false; alert("😭 DEFEAT! 输给了狂暴化的宿敌跑车！"); }
 
-                ai1Car.position.set(ai1X, 0, -(ai1Dist - pDist));
-                ai2Car.position.set(ai2X, 0, -(ai2Dist - pDist));
-
-                neonPoles.forEach(p => { 
-                    p.position.x -= currentTrackCurve * (pSpeed / 4.2) * 0.55;
-                    let rZ = (p.position.z - (-pDist)) % 800; if(rZ > 0) rZ -= 800; p.position.z = rZ; 
-                });
-                renderer.render(scene, camera);
-            } else {
-                draw2DScene();
-            }
-
-            if (pDist >= TRACK_LENGTH) { gameRunning = false; alert("🎉 奇迹！你成功征服45重发光弯道，斩获车神宝座！"); }
-            if (ai1Dist >= TRACK_LENGTH || ai2Dist >= TRACK_LENGTH) { gameRunning = false; alert("😭 惜败！被超跑对手率先冲线！"); }
+            renderer.render(scene, camera);
         }
 
-        // 终极等离子多色喷火
-        function create机甲Flame() {
+        // 【超级进化】镜头直升机死死追随锁定与三维车身倾斜！
+        function updateCameraAndPositions() {
+            let pCurve = getTrackCurveAt(-pDist) * 45;
+            
+            // 兰博基尼永远顺畅贴合弯道曲率坐标！
+            playerCar.position.set(pCurve + pX, 0, -pDist);
+            // 变道与过弯时车身左右倾斜
+            playerCar.rotation.y = keys.ArrowLeft ? 0.12 : (keys.ArrowRight ? -0.12 : 0);
+            playerCar.rotation.z = (pX * -0.01) - (getTrackCurveAt(-pDist) * 0.05);
+
+            // 对手车轨迹同样绑定弯道曲线
+            let ai1Curve = getTrackCurveAt(-ai1Dist) * 45;
+            ai1Car.position.set(ai1Curve + ai1X, 0, -ai1Dist);
+            ai1Car.rotation.z = -getTrackCurveAt(-ai1Dist) * 0.05;
+
+            let ai2Curve = getTrackCurveAt(-ai2Dist) * 45;
+            ai2Car.position.set(ai2Curve + ai2X, 0, -ai2Dist);
+            ai2Car.rotation.z = -getTrackCurveAt(-ai2Dist) * 0.05;
+
+            // 极速赛车游戏专属追踪俯瞰视角
+            camera.position.x = playerCar.position.x * 0.65 + getTrackCurveAt(-pDist - 40) * 15;
+            camera.position.y = THREE.MathUtils.lerp(camera.position.y, 6.0 - (pSpeed * 0.2), 0.1); 
+            camera.position.z = -pDist + 13.5; 
+            camera.lookAt(playerCar.position.x, 2.0 + (pSpeed * 0.1), -pDist - 15);
+        }
+
+        // 亮红、明黄、天蓝交织的立体多色等离子火焰
+        function createEnginePlumes() {
             const colors = ["#00ffff", "#ff0055", "#fff200"];
             const pGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
             const pMat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random()*colors.length)] });
             const p = new THREE.Mesh(pGeo, pMat);
-            p.position.set(pX + (Math.random()*1.4 - 0.7), 0.6, 3.6);
+            
+            p.position.set(playerCar.position.x + (Math.random()*1.4 - 0.7), 0.6, -pDist + 3.6);
             scene.add(p);
-            particles.push({ mesh: p, life: 1.0, vx: Math.random()*0.14-0.07, vz: 1.8 });
+            particles.push({ mesh: p, life: 1.0, vx: Math.random()*0.1-0.05, vz: 1.6 });
         }
 
-        // 碰撞爆炸火花
         function explodeParticles(x, y, z) {
-            for(let i=0; i<15; i++) {
-                const pGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-                const pMat = new THREE.MeshBasicMaterial({ color: "#ff4500" });
-                const p = new THREE.Mesh(pGeo, pMat); p.position.set(x, y, z); scene.add(p);
-                particles.push({ mesh: p, life: 1.0, vx: Math.random()*0.6-0.3, vz: Math.random()*0.6-0.3 });
+            for(let i=0; i<18; i++) {
+                const pMesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshBasicMaterial({ color: "#ff3366" }));
+                pMesh.position.set(x + (Math.random()*2-1), y, z); scene.add(pMesh);
+                particles.push({ mesh: pMesh, life: 1.0, vx: Math.random()*0.8-0.4, vz: Math.random()*0.4 - 0.2 });
             }
         }
 
         function updateParticles() {
             for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i]; p.mesh.position.z += p.vz; p.mesh.position.x += p.vx; p.life -= 0.05;
+                let p = particles[i]; p.mesh.position.z += p.vz; p.mesh.position.x += p.vx; p.life -= 0.04;
                 p.mesh.scale.set(p.life, p.life, p.life);
                 if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
             }
-        }
-
-        function init2DFallback() {
-            canvas2d = document.createElement('canvas'); canvas2d.width = 640; canvas2d.height = 480; container.appendChild(canvas2d);
-            ctx2d = canvas2d.getContext('2d'); draw2DScene();
-        }
-
-        function draw2DScene() {
-            ctx2d.fillStyle = "#030308"; ctx2d.fillRect(0, 0, 640, 480);
-            ctx2d.fillStyle = "#15161e"; ctx2d.beginPath(); ctx2d.moveTo(240 - currentTrackCurve*5, 150); ctx2d.lineTo(400 - currentTrackCurve*5, 150); ctx2d.lineTo(560, 480); ctx2d.lineTo(80, 480); ctx2d.fill();
-            ctx2d.strokeStyle = "#00ffcc"; ctx2d.lineWidth = 6; ctx2d.beginPath(); ctx2d.moveTo(240 - currentTrackCurve*5, 150); ctx2d.lineTo(80, 480); ctx2d.moveTo(400 - currentTrackCurve*5, 150); ctx2d.lineTo(560, 480); ctx2d.stroke();
-            let pCanvasX = 320 + pX * 10 - 25; ctx2d.fillStyle = "#00ffcc"; ctx2d.fillRect(pCanvasX, 380, 50, 75);
         }
     </script>
 </body>
